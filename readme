@@ -1,5 +1,6 @@
 --- Get Status ---
-Ever wanted to get the status of repos in multiple sub directories? Yeah, me too. So I knocked this up.
+Ever wanted to get the status of repos in multiple sub directories? Yeah, me 
+too. So I knocked this up.
 
 -- Installation --
 Copy the file to /usr/bin
@@ -11,13 +12,16 @@ Give it execute permissions
 %> chmod +x /usr/bin/show_status
 
 -- Usage --
-show_status [directory]
+show_status [directory] [mini mode off]
 
-Running this will look in each subdirectory of your current directory for a '.git' file. If it finds one, it'll run 'git status' and ouput to the screen
+Running this will look in each subdirectory of your current directory for a 
+'.git' file. If it finds one, it'll run 'git status' and ouput to the screen
 
 -- example --
-%> show_status
-	Runs on the current dir
+%> show_status ./ TRUE
+	Runs on the current dir with full output (shows the changes, what's added etc)
+%> show_status ./ TRUE
+    Runs on the current dir with min output, just shows that a repo has changes
 %> show_status /home/somewhere/where/you/git
 	Runs on the specified directory
 
