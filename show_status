@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # Check to make sure we have all the required arguments
     try:
         dirname = sys.argv[1]
-    except ValueError:
+    except IndexError:
         sys.stdout.write('Using default dir\n')
         
     # Do they want a full version?
