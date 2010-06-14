@@ -14,14 +14,15 @@ import glob
 import commands
 
 # Setup some stuff
-dirname        = './'
+dirname = './'
+gitted  = False
 
 #-------------------
 def show_usage():
 #-------------------
     """Print the program usage to the screen"""
     
-    sys.stdout.write("\nUsage: syncR [source] [destination] [deleteDestFiles] ")
+    sys.stdout.write("\nUsage: show_status [dir]\n")
     
 #-------------------
 def show_error(error="Undefined Error!"):
@@ -31,17 +32,6 @@ def show_error(error="Undefined Error!"):
     show_usage()
     sys.exit(1)
     
-#-------------------
-def file_dir_exists(file_or_dir):
-#-------------------
-    """Checks to see if the file, or dir eists"""
-    if True == os.path.isdir(file_or_dir):
-        return True
-
-    if True == os.path.isfile(file_or_dir):
-        return True
-
-    return False
     
 #-------------------
 # Now, onto the main event!
@@ -63,6 +53,10 @@ if __name__ == "__main__":
 
         #is there a .git file
         if os.path.exists(infile + "/.git"):
+            
+            #Yay, we found one!
+            gitted = True
+            
             #Print some repo details
             sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
             
@@ -72,6 +66,10 @@ if __name__ == "__main__":
             sys.stdout.write(out)
             sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
             
+
+            
+    if False == gitted:
+        show_error("Error: None of those sub directories had a .git file.")
 
     sys.stdout.write("Done\n")
       
