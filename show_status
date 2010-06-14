@@ -16,6 +16,7 @@ import commands
 # Setup some stuff
 dirname = './'
 gitted  = False
+mini    = True
 
 #-------------------
 def show_usage():
@@ -42,9 +43,16 @@ if __name__ == "__main__":
     
     # Check to make sure we have all the required arguments
     try:
-        (scriptName, dirname) = sys.argv
+        dirname = sys.argv[1]
     except ValueError:
         sys.stdout.write('Using default dir\n')
+        
+    # Do they want a full version?
+    try:
+        sys.argv[2]
+        mini = False
+    except IndexError:
+        mini = True
         
     sys.stdout.write('Scanning sub directories of %s\n' %dirname)
     
@@ -57,14 +65,22 @@ if __name__ == "__main__":
             #Yay, we found one!
             gitted = True
             
-            #Print some repo details
-            sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
-            
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
             out = commands.getoutput('cd '+ infile + '; git status;' + 'cd ../')
-            sys.stdout.write(out)
-            sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
+            
+            # Mini?
+            if True == mini:
+                if -1 != out.find('nothing'):
+                    sys.stdout.write(infile.ljust(40) +": No Changes\n")
+                else:
+                    sys.stdout.write(infile.ljust(40) +": Changes\n")
+            else:
+                #Print some repo details
+                sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
+                sys.stdout.write(out)
+                sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
+                
             
 
             
