@@ -12,25 +12,50 @@ import sys
 import os
 import glob
 import commands
+from optparse import OptionParser
 
 # Setup some stuff
 dirname = './'
 gitted  = False
 mini    = True
 
-#-------------------
-def show_usage():
-#-------------------
-    """Print the program usage to the screen"""
-    
-    sys.stdout.write("\nUsage: show_status [dir]\n")
+parser = OptionParser()
+parser.add_option("-d", "--dir", 
+                    dest    ="dirname", 
+                    action  ="store",
+                    help    ="The directory to parse sub dirs from", 
+                    default ="./"
+                    )
+
+parser.add_option("-v", "--verbose",
+                  action    ="store_true", 
+                  dest      ="verbose", 
+                  default   =False,
+                  help      ="Show the full detail of git status"
+                  )
+
+parser.add_option("-r", "--remote",
+                action      ="store", 
+                dest        ="remote", 
+                default     =False,
+                help        ="Push to the master (remotename:branchname)"
+                )
+                
+parser.add_option("-p", "--pull",
+                action      ="store", 
+                dest        ="pull", 
+                default     =False,
+                help        ="Pull from the master (remotename:branchname)"
+                )
+
+# Now, parse the args
+(options, args) = parser.parse_args()
     
 #-------------------
 def show_error(error="Undefined Error!"):
 #-------------------
     """Writes an error to stderr"""
     sys.stderr.write(error)
-    show_usage()
     sys.exit(1)
     
     
@@ -40,39 +65,39 @@ def show_error(error="Undefined Error!"):
 if __name__ == "__main__":
     os.system('clear')
     sys.stdout.write('-- Starting git status...\n')
-    
-    # Check to make sure we have all the required arguments
-    try:
-        dirname = sys.argv[1]
-    except IndexError:
-        sys.stdout.write('Using default dir\n')
         
-    # Do they want a full version?
-    try:
-        sys.argv[2]
-        mini = False
-    except IndexError:
-        mini = True
-        
-    sys.stdout.write('Scanning sub directories of %s\n' %dirname)
+    sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
     
     # See whats here
-    for infile in glob.glob( os.path.join(dirname, '*') ):
+    for infile in glob.glob( os.path.join(options.dirname, '*') ):
 
         #is there a .git file
-        if os.path.exists(infile + "/.git"):
+        if os.path.exists( os.path.join(infile, ".git") ):
             
             #Yay, we found one!
             gitted = True
             
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
-            out = commands.getoutput('cd '+ infile + '; git status;' + 'cd ../')
+            out = commands.getoutput('cd '+ infile + '; git status')
             
             # Mini?
-            if True == mini:
+            if False == options.verbose:
                 if -1 != out.find('nothing'):
-                    sys.stdout.write(infile.ljust(40) +": No Changes\n")
+                    result = ": No Changes"
+                    
+                    # Pull from the remote
+                    if False != options.pull:
+                        push = commands.getoutput('git pull '+ ' '.join(options.pull.split(":")) )
+                        result = result + " (Pulled) \n" + push
+                                          
+                    # Push to the remote  
+                    if False != options.remote:
+                        push = commands.getoutput('git push '+ ' '.join(options.remote.split(":")) )
+                        result = result + " (Pushed) \n" + push
+                        
+                    # Write to screen
+                    sys.stdout.write("--" + infile.ljust(40) + result +"\n")
                 else:
                     sys.stdout.write(infile.ljust(40) +": Changes\n")
             else:
@@ -81,11 +106,14 @@ if __name__ == "__main__":
                 sys.stdout.write(out)
                 sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
                 
+            # Come out of the dir and into the next
+            commands.getoutput('cd ../')
+                
             
 
             
     if False == gitted:
-        show_error("Error: None of those sub directories had a .git file.")
+        show_error("Error: None of those sub directories had a .git file.\n")
 
     sys.stdout.write("Done\n")
       
