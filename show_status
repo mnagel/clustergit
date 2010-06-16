@@ -19,12 +19,18 @@ dirname = './'
 gitted  = False
 mini    = True
 
-parser = OptionParser()
+parser = OptionParser(description="\
+Show Status is awesome. If you tell it a directory to look in, it'll scan \
+through all the sub dirs looking for a .git directory. When it finds one \
+it'll look to see if there are any changes and let you know. \
+It can also push and pull to/from a remote location (like github.com) \
+(but only if there are no changes.) \
+Contact mike@mikepearce.net for any support.")
 parser.add_option("-d", "--dir", 
                     dest    ="dirname", 
                     action  ="store",
                     help    ="The directory to parse sub dirs from", 
-                    default ="./"
+                    default =os.path.abspath("./")+"/"
                     )
 
 parser.add_option("-v", "--verbose",
@@ -65,6 +71,7 @@ def show_error(error="Undefined Error!"):
 if __name__ == "__main__":
     os.system('clear')
     sys.stdout.write('-- Starting git status...\n')
+
         
     sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
     
@@ -88,18 +95,26 @@ if __name__ == "__main__":
                     
                     # Pull from the remote
                     if False != options.pull:
-                        push = commands.getoutput('git pull '+ ' '.join(options.pull.split(":")) )
+                        push = commands.getoutput(
+                            'cd '+ infile +
+                            '; git pull '+ 
+                            ' '.join(options.pull.split(":")) 
+                        )
                         result = result + " (Pulled) \n" + push
                                           
                     # Push to the remote  
                     if False != options.remote:
-                        push = commands.getoutput('git push '+ ' '.join(options.remote.split(":")) )
+                        push = commands.getoutput(
+                            'cd '+ infile + 
+                            '; git push '+ 
+                            ' '.join(options.remote.split(":")) 
+                        )
                         result = result + " (Pushed) \n" + push
                         
                     # Write to screen
                     sys.stdout.write("--" + infile.ljust(40) + result +"\n")
                 else:
-                    sys.stdout.write(infile.ljust(40) +": Changes\n")
+                    sys.stdout.write("--" + infile.ljust(40) +": Changes\n")
             else:
                 #Print some repo details
                 sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
