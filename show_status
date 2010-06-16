@@ -27,31 +27,38 @@ It can also push and pull to/from a remote location (like github.com) \
 (but only if there are no changes.) \
 Contact mike@mikepearce.net for any support.")
 parser.add_option("-d", "--dir", 
-                    dest    ="dirname", 
-                    action  ="store",
-                    help    ="The directory to parse sub dirs from", 
-                    default =os.path.abspath("./")+"/"
+                    dest    = "dirname", 
+                    action  = "store",
+                    help    = "The directory to parse sub dirs from", 
+                    default = os.path.abspath("./")+"/"
                     )
 
 parser.add_option("-v", "--verbose",
-                  action    ="store_true", 
-                  dest      ="verbose", 
-                  default   =False,
-                  help      ="Show the full detail of git status"
+                  action    = "store_true", 
+                  dest      = "verbose", 
+                  default   = False,
+                  help      = "Show the full detail of git status"
                   )
 
 parser.add_option("-r", "--remote",
-                action      ="store", 
-                dest        ="remote", 
-                default     =False,
-                help        ="Push to the master (remotename:branchname)"
+                action      = "store", 
+                dest        = "remote", 
+                default     = "",
+                help        = "Set the remote name (remotename:branchname)"
                 )
-                
+
+parser.add_option("--push",
+                action      = "store_true", 
+                dest        = "push", 
+                default     = False,
+                help        = "Do a 'git push' if you've set a remote with -r it will push to there"
+                )
+
 parser.add_option("-p", "--pull",
-                action      ="store", 
-                dest        ="pull", 
-                default     =False,
-                help        ="Pull from the master (remotename:branchname)"
+                action      = "store_true", 
+                dest        = "pull", 
+                default     = False,
+                help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
                 )
 
 # Now, parse the args
@@ -98,12 +105,12 @@ if __name__ == "__main__":
                         push = commands.getoutput(
                             'cd '+ infile +
                             '; git pull '+ 
-                            ' '.join(options.pull.split(":")) 
+                            ' '.join(options.remote.split(":")) 
                         )
                         result = result + " (Pulled) \n" + push
                                           
                     # Push to the remote  
-                    if False != options.remote:
+                    if False != options.push:
                         push = commands.getoutput(
                             'cd '+ infile + 
                             '; git push '+ 
