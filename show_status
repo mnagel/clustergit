@@ -93,6 +93,13 @@ parser.add_option("-c", "--clear",
                 help        = "Clear screen on startup"
                 )
 
+parser.add_option("-C", "--count-dirty",
+                action      = "store_true",
+                dest        = "count",
+                default     = False,
+                help        = "Only display a count of not-clean repos"
+                )
+
 parser.add_option("-q", "--quiet",
                 action      = "store_true",
                 dest        = "quiet",
@@ -154,6 +161,8 @@ if __name__ == "__main__":
     if not options.colors:
         bc.disable()
     
+    dirties = 0
+
     # See whats here
     for infile in glob.glob( os.path.join(options.dirname, '*') ):
 
@@ -201,6 +210,8 @@ if __name__ == "__main__":
                     if options.hide_clean:
                         continue
                     messages = [bc.OKGREEN + "Clean" + bc.ENDC]
+                else:
+                    dirties += 1
 
                 if can_push and False != options.push:
                     # Push to the remote  
@@ -230,9 +241,10 @@ if __name__ == "__main__":
                     else:
                         messages.append("Pulled")
                 # Write to screen
-                sys.stdout.write("--" + infile.ljust(options.align) + ": ")
-                sys.stdout.write(", ".join(messages) + "\n")
-                sys.stdout.flush()
+                if not options.count:
+                    sys.stdout.write("--" + infile.ljust(options.align) + ": ")
+                    sys.stdout.write(", ".join(messages) + "\n")
+                    sys.stdout.flush()
             else:
                 #Print some repo details
                 sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
@@ -247,6 +259,9 @@ if __name__ == "__main__":
             
     if False == gitted:
         show_error("Error: None of those sub directories had a .git file.\n")
+
+    if options.count:
+        sys.stdout.write(str(dirties) + "\n")
 
     if not options.quiet:
         sys.stdout.write("Done\n")
