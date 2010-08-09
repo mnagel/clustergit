@@ -14,6 +14,23 @@ import glob
 import commands
 from optparse import OptionParser
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+    def disable(self):
+        self.HEADER = ''
+        self.OKBLUE = ''
+        self.OKGREEN = ''
+        self.WARNING = ''
+        self.FAIL = ''
+        self.ENDC = ''
+
+
 # Setup some stuff
 dirname = './'
 gitted  = False
@@ -40,6 +57,14 @@ parser.add_option("-v", "--verbose",
                   help      = "Show the full detail of git status"
                   )
 
+parser.add_option("-a", "--align",
+                  action    = "store",
+                  dest      = "align",
+                  default   = 40,
+                  type      = "int",
+                  help      = "Repo name align (space padding)"
+                  )
+
 parser.add_option("-r", "--remote",
                 action      = "store", 
                 dest        = "remote", 
@@ -61,6 +86,48 @@ parser.add_option("-p", "--pull",
                 help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
                 )
 
+parser.add_option("-c", "--clear",
+                action      = "store_true",
+                dest        = "clear",
+                default     = False,
+                help        = "Clear screen on startup"
+                )
+
+parser.add_option("-q", "--quiet",
+                action      = "store_true",
+                dest        = "quiet",
+                default     = False,
+                help        = "Skip startup info"
+                )
+
+parser.add_option("-H", "--hide-clean",
+                action      = "store_true",
+                dest        = "hide_clean",
+                default     = False,
+                help        = "Hide clean repos"
+                )
+
+parser.add_option("-R", "--relative",
+                action      = "store_true",
+                dest        = "relative",
+                default     = False,
+                help        = "Print relative paths"
+                )
+
+parser.add_option("-n", "--no-colors",
+                action      = "store_false",
+                dest        = "colors",
+                default     = True,
+                help        = "Disable ANSI color output"
+                )
+
+parser.add_option("-b", "--branch",
+                action      = "store",
+                dest        = "branch",
+                default     = "master",
+                help        = "Warn if not on this branch"
+                )
+
 # Now, parse the args
 (options, args) = parser.parse_args()
     
@@ -76,11 +143,16 @@ def show_error(error="Undefined Error!"):
 # Now, onto the main event!
 #-------------------
 if __name__ == "__main__":
-    os.system('clear')
-    sys.stdout.write('-- Starting git status...\n')
+    if options.clear:
+        os.system('clear')
 
-        
-    sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
+    if not options.quiet:
+        sys.stdout.write('-- Starting git status...\n')
+        sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
+
+    bc = bcolors()
+    if not options.colors:
+        bc.disable()
     
     # See whats here
     for infile in glob.glob( os.path.join(options.dirname, '*') ):
@@ -97,31 +169,70 @@ if __name__ == "__main__":
             
             # Mini?
             if False == options.verbose:
-                if -1 != out.find('nothing'):
-                    result = ": No Changes"
-                    
-                    # Pull from the remote
-                    if False != options.pull:
-                        push = commands.getoutput(
-                            'cd '+ infile +
-                            '; git pull '+ 
-                            ' '.join(options.remote.split(":")) 
-                        )
-                        result = result + " (Pulled) \n" + push
-                                          
-                    # Push to the remote  
-                    if False != options.push:
-                        push = commands.getoutput(
-                            'cd '+ infile + 
-                            '; git push '+ 
-                            ' '.join(options.remote.split(":")) 
-                        )
-                        result = result + " (Pushed) \n" + push
-                        
-                    # Write to screen
-                    sys.stdout.write("--" + infile.ljust(40) + result +"\n")
+                if options.relative:
+                    infile = os.path.relpath(infile, options.dirname)
+		messages = []
+                clean = True
+		can_push = False
+                can_pull = True
+                if len(options.branch) > 0 and -1 == out.find('On branch ' + options.branch):
+                    messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
+                    can_pull = False
+                    clean = False
+                if -1 != out.find('nothing to commit (working directory clean)'):
+                    messages.append(bc.OKBLUE + "No Changes" + bc.ENDC)
+                    can_push = True
+                elif -1 != out.find('nothing added to commit but untracked files present'):
+                    messages.append(bc.WARNING + "Untracked files" + bc.ENDC)
+                    can_push = True
+                    clean = False
                 else:
-                    sys.stdout.write("--" + infile.ljust(40) +": Changes\n")
+                    messages.append(bc.OKGREEN + "Changes" + bc.ENDC)
+                    can_pull = False
+                    clean = False
+                if -1 != out.find("Your branch is ahead of"):
+                    messages.append(bc.FAIL + "Unpushed commits" + bc.ENDC)
+                    can_pull = False
+                    clean = False
+                else:
+                    can_push = False
+
+                if clean:
+                    if options.hide_clean:
+                        continue
+                    messages = [bc.OKGREEN + "Clean" + bc.ENDC]
+
+                if can_push and False != options.push:
+                    # Push to the remote  
+                    push = commands.getoutput(
+                        'cd '+ infile + 
+                        '; git push '+ 
+                        ' '.join(options.remote.split(":")) 
+                    )
+                    if -1 != push.find("[rejected]"):
+                        messages.append(bc.FAIL + "Push rejected" + bc.ENDC)
+                    else:
+                        messages.append(bc.OKBLUE + "Pushed OK" + bc.ENDC)
+
+                if can_pull and False != options.pull:
+                    # Pull from the remote
+                    pull = commands.getoutput(
+                        'cd '+ infile +
+                        '; git pull '+ 
+                        ' '.join(options.remote.split(":")) 
+                    )
+                    if -1 != pull.find("Already up-to-date."):
+                        messages.append("Pulled nothing")
+                    elif -1 != pull.find("CONFLICT"):
+                        messages.append(bc.FAIL + "Pull conflict" + bc.ENDC)
+                    elif -1 != pull.find("fatal: "):
+                        messages.append(bc.FAIL + "Pull fatal" + bc.ENDC)
+                    else:
+                        messages.append("Pulled")
+                # Write to screen
+                sys.stdout.write("--" + infile.ljust(options.align) + ": ")
+                sys.stdout.write(", ".join(messages) + "\n")
+                sys.stdout.flush()
             else:
                 #Print some repo details
                 sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
@@ -137,5 +248,7 @@ if __name__ == "__main__":
     if False == gitted:
         show_error("Error: None of those sub directories had a .git file.\n")
 
-    sys.stdout.write("Done\n")
+    if not options.quiet:
+        sys.stdout.write("Done\n")
+
       
