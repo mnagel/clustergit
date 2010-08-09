@@ -174,7 +174,7 @@ if __name__ == "__main__":
             
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
-            out = commands.getoutput('cd '+ infile + '; git status')
+            out = commands.getoutput('cd '+ infile + '; LC_ALL=C git status')
             
             # Mini?
             if False == options.verbose:
@@ -217,7 +217,7 @@ if __name__ == "__main__":
                     # Push to the remote  
                     push = commands.getoutput(
                         'cd '+ infile + 
-                        '; git push '+ 
+                        '; LC_ALL=C git push '+ 
                         ' '.join(options.remote.split(":")) 
                     )
                     if -1 != push.find("[rejected]"):
@@ -229,7 +229,7 @@ if __name__ == "__main__":
                     # Pull from the remote
                     pull = commands.getoutput(
                         'cd '+ infile +
-                        '; git pull '+ 
+                        '; LC_ALL=C git pull '+ 
                         ' '.join(options.remote.split(":")) 
                     )
                     if -1 != pull.find("Already up-to-date."):
