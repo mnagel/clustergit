@@ -259,6 +259,8 @@ if __name__ == "__main__":
 
     if options.count:
         sys.stdout.write(str(dirties) + "\n")
+    if dirties == 0 and options.hide_clean:
+        sys.stdout.write("All repos clean\n")
 
     if not options.quiet:
         sys.stdout.write("Done\n")
