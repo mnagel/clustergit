@@ -196,7 +196,7 @@ if __name__ == "__main__":
                     can_push = True
                     clean = False
                 else:
-                    messages.append(bc.OKGREEN + "Changes" + bc.ENDC)
+                    messages.append(bc.FAIL + "Changes" + bc.ENDC)
                     can_pull = False
                     clean = False
                 if 'Your branch is ahead of' in out:
