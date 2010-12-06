@@ -3,7 +3,6 @@
 # @desc     Tired of having to go into each sub dir to find out whether or 
 #           not you did a git commit? Tire no more, just use this!
 #           
-# @usage    ./showstatus [location]
 # @author   Mike Pearce <mike@mikepearce.net>
 # @since    18/05/2010
 
