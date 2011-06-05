@@ -179,9 +179,9 @@ if __name__ == "__main__":
             if not options.verbose:
                 if options.relative:
                     infile = os.path.relpath(infile, options.dirname)
-		messages = []
+                messages = []
                 clean = True
-		can_push = False
+                can_push = False
                 can_pull = True
                 if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
                     messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
