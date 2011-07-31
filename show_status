@@ -232,13 +232,13 @@ if __name__ == "__main__":
                         ' '.join(options.remote.split(":"))
                     )
                     if "Already up-to-date" in pull:
-                        messages.append("Pulled nothing")
+                        messages.append(bc.OKGREEN + "Pulled nothing" + bc.ENDC)
                     elif "CONFLICT" in pull:
                         messages.append(bc.FAIL + "Pull conflict" + bc.ENDC)
                     elif "fatal: " in pull:
                         messages.append(bc.FAIL + "Pull fatal" + bc.ENDC)
                     else:
-                        messages.append("Pulled")
+                        messages.append(bc.OKBLUE + "Pulled" + bc.ENDC)
                 # Write to screen
                 if not options.count:
                     sys.stdout.write("--" + infile.ljust(options.align) + ": ")
