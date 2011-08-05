@@ -8,6 +8,10 @@ h2. Installation
 Either copy the script as indicated below or have a look at the Debian
 packaging at: https://github.com/mnagel/clustergit-packaging
 
+h2. Credits
+show_status by Mike Pearce: https://github.com/MikePearce/Git-Status
+patches to show_status by ilor: https://github.com/ilor/Git-Status
+
 h1. show_status by Mike Pearce
 
 Ever wanted to get the status of repos in multiple sub directories?
