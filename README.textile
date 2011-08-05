@@ -1,16 +1,20 @@
 h1. clustergit
+
 clustergit is a renamed and slightly improved version of Mike Pearce's
 show_status.
 
 h2. Installation
+
 Either copy the script as indicated below or have a look at the Debian
 packaging at: https://github.com/mnagel/clustergit-packaging
 
 h1. show_status by Mike Pearce
+
 Ever wanted to get the status of repos in multiple sub directories?
 Yeah, me too. So I knocked this up.
 
 h2. Installation
+
 Copy the file to /usr/bin
 <pre><code> cp show_status /usr/bin
 </code></pre>
@@ -20,6 +24,7 @@ Give it execute permissions
 </code></pre>
 
 h2. Usage
+
 Usage: show_status [options]
 
 Show Status is awesome. If you tell it a directory to look in, it'll scan
@@ -30,6 +35,7 @@ changes.)
 Contact mike@mikepearce.net for any support.
 
 h2. Options
+
 <pre><code>
   -h, --help            Show this help message and exit
   -d DIR, --dir=DIRN    The directory to parse sub dirs from
@@ -41,5 +47,6 @@ h2. Options
 </code></pre>
 
 h2. Warranties/Guarantees
+
 None, you're on your own.
 If you'd like some help, mail me on mike@mikepearce.net
