@@ -163,7 +163,9 @@ if __name__ == "__main__":
     dirties = 0
 
     # See whats here
-    for infile in glob.glob( os.path.join(options.dirname, '*') ):
+    files = glob.glob( os.path.join(options.dirname, '*') )
+    files.sort()
+    for infile in files:
 
         #is there a .git file
         if os.path.exists( os.path.join(infile, ".git") ):
