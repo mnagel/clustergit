@@ -208,9 +208,10 @@ if __name__ == "__main__":
                     can_push = False
 
                 if clean:
-                    if options.hide_clean:
-                        continue
-                    messages = [bc.OKGREEN + "Clean" + bc.ENDC]
+                    if not options.hide_clean:
+                        messages = [bc.OKGREEN + "Clean" + bc.ENDC]
+                    else:
+                        messages = []
                 else:
                     dirties += 1
 
@@ -234,7 +235,8 @@ if __name__ == "__main__":
                         ' '.join(options.remote.split(":"))
                     )
                     if "Already up-to-date" in pull:
-                        messages.append(bc.OKGREEN + "Pulled nothing" + bc.ENDC)
+                        if not options.hide_clean:
+                            messages.append(bc.OKGREEN + "Pulled nothing" + bc.ENDC)
                     elif "CONFLICT" in pull:
                         messages.append(bc.FAIL + "Pull conflict" + bc.ENDC)
                     elif "fatal: " in pull:
@@ -242,7 +244,7 @@ if __name__ == "__main__":
                     else:
                         messages.append(bc.OKBLUE + "Pulled" + bc.ENDC)
                 # Write to screen
-                if not options.count:
+                if not options.count and messages:
                     sys.stdout.write("--" + infile.ljust(options.align) + ": ")
                     sys.stdout.write(", ".join(messages) + "\n")
                     sys.stdout.flush()
