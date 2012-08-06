@@ -153,7 +153,7 @@ if __name__ == "__main__":
         os.system('clear')
 
     if not options.quiet:
-        sys.stdout.write('-- Starting git status...\n')
+        sys.stdout.write('Starting git status...\n')
         sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
 
     bc = bcolors()
@@ -245,7 +245,7 @@ if __name__ == "__main__":
                         messages.append(bc.OKBLUE + "Pulled" + bc.ENDC)
                 # Write to screen
                 if not options.count and messages:
-                    sys.stdout.write("--" + infile.ljust(options.align) + ": ")
+                    sys.stdout.write(infile.ljust(options.align) + ": ")
                     sys.stdout.write(", ".join(messages) + "\n")
                     sys.stdout.flush()
             else:
