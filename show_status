@@ -46,7 +46,7 @@ parser.add_option("-d", "--dir",
                     dest    = "dirname",
                     action  = "store",
                     help    = "The directory to parse sub dirs from",
-                    default = os.path.abspath("./")+"/"
+                    default = "."
                     )
 
 parser.add_option("-v", "--verbose",
