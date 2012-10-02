@@ -134,6 +134,13 @@ parser.add_option("-b", "--branch",
                 help        = "Warn if not on this branch"
                 )
 
+parser.add_option("--recursive",
+                action      = "store_true",
+                dest        = "recursive",
+                default     = False,
+                help        = "Recursively search for git repos"
+                )
+
 # Now, parse the args
 (options, args) = parser.parse_args()
 
@@ -145,25 +152,16 @@ def show_error(error="Undefined Error!"):
     sys.exit(1)
 
 
-#-------------------
-# Now, onto the main event!
-#-------------------
-if __name__ == "__main__":
-    if options.clear:
-        os.system('clear')
-
-    if not options.quiet:
-        sys.stdout.write('Starting git status...\n')
-        sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
-
-    bc = bcolors()
-    if not options.colors:
-        bc.disable()
-
-    dirties = 0
+def check(dirname):
+    """
+    Check the subdirectories of a single directory.
+    See if they are versioned in git and display the requested information.
+    """
+    # this method was extracted after the fact, but we need to write these...
+    global gitted, dirties
 
     # See whats here
-    files = glob.glob( os.path.join(options.dirname, '*') )
+    files = glob.glob( os.path.join(dirname, '*') )
     files.sort()
     for infile in files:
 
@@ -256,6 +254,29 @@ if __name__ == "__main__":
 
             # Come out of the dir and into the next
             commands.getoutput('cd ../')
+
+
+#-------------------
+# Now, onto the main event!
+#-------------------
+if __name__ == "__main__":
+    if options.clear:
+        os.system('clear')
+
+    if not options.quiet:
+        sys.stdout.write('Starting git status...\n')
+        sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
+
+    bc = bcolors()
+    if not options.colors:
+        bc.disable()
+
+    dirties = 0
+
+    for (path, dirs, files) in os.walk(options.dirname):
+        check(path)
+        if not options.recursive:
+            break
 
     if not gitted:
         show_error("Error: None of those sub directories had a .git file.\n")
