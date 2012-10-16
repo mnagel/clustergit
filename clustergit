@@ -161,9 +161,10 @@ def check(dirname):
     global gitted, dirties
 
     # See whats here
-    files = glob.glob( os.path.join(dirname, '*') )
+    files = os.listdir(dirname)
     files.sort()
     for infile in files:
+        infile = os.path.join(dirname, infile)
 
         #is there a .git file
         if os.path.exists( os.path.join(infile, ".git") ):
