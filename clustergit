@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/env python
 
 # @desc     Tired of having to go into each sub dir to find out whether or
 #           not you did a git commit? Tire no more, just use this!
