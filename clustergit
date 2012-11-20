@@ -35,13 +35,11 @@ dirname = './'
 gitted  = False
 mini    = True
 
-parser = OptionParser(description="\
-Show Status is awesome. If you tell it a directory to look in, it'll scan \
-through all the sub dirs looking for a .git directory. When it finds one \
-it'll look to see if there are any changes and let you know. \
-It can also push and pull to/from a remote location (like github.com) \
-(but only if there are no changes.) \
-Contact mike@mikepearce.net for any support.")
+parser = OptionParser(description="""
+clustergit will scan through all subdirectories looking for a .git directory.
+When it finds one it'll look to see if there are any changes and let you know.
+If there are no changes it can also push and pull to/from a remote location.
+""".strip())
 parser.add_option("-d", "--dir",
                     dest    = "dirname",
                     action  = "store",
