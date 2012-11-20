@@ -1,57 +1,71 @@
-h1. clustergit
+# clustergit
 
-clustergit is a renamed and slightly improved version of Mike Pearce's
-show_status.
+clustergit allows you to run git commands on multiple repositories at once.
+This works well for at least: `git status, git pull, git push, ...`
 
-h2. Installation
+It is a renamed and slightly improved version of Mike Pearce's show_status.
 
-Either copy the script as indicated below or have a look at the Debian
-packaging at: https://github.com/mnagel/clustergit-packaging
+## Installation
 
-h2. Credits
+Make the script executable and drop it somewhere in your $PATH.
+
+## Usage
+
+Usage: clustergit [options]
+
+clustergit will scan through all subdirectories looking for a .git directory.
+When it finds one it'll look to see if there are any changes and let you know.
+If there are no changes it can also push and pull to/from a remote location.
+
+## Options
+
+```
+  -h, --help            show this help message and exit
+  -d DIRNAME, --dir=DIRNAME
+                        The directory to parse sub dirs from
+  -v, --verbose         Show the full detail of git status
+  -a ALIGN, --align=ALIGN
+                        Repo name align (space padding)
+  -r REMOTE, --remote=REMOTE
+                        Set the remote name (remotename:branchname)
+  --push                Do a 'git push' if you've set a remote with -r it will
+                        push to there
+  -p, --pull            Do a 'git pull' if you've set a remote with -r it will
+                        pull from there
+  -c, --clear           Clear screen on startup
+  -C, --count-dirty     Only display a count of not-clean repos
+  -q, --quiet           Skip startup info
+  -H, --hide-clean      Hide clean repos
+  -R, --relative        Print relative paths
+  -n, --no-colors       Disable ANSI color output
+  -b BRANCH, --branch=BRANCH
+                        Warn if not on this branch
+  --recursive           Recursively search for git repos
+```
+
+## Contact
+
+via https://github.com/mnagel/clustergit
+
+## Credits
 
 show_status by Mike Pearce: https://github.com/MikePearce/Git-Status
 patches to show_status by ilor: https://github.com/ilor/Git-Status
 
-h1. show_status by Mike Pearce
+## License
 
-Ever wanted to get the status of repos in multiple sub directories?
-Yeah, me too. So I knocked this up.
+Files:
 
-h2. Installation
+* clustergit, README.*
 
-Copy the file to /usr/bin
-<pre><code> cp show_status /usr/bin
-</code></pre>
+Copyright:
 
-Give it execute permissions
-<pre><code> chmod +x /usr/bin/show_status
-</code></pre>
+* 2010 Mike Pearce mike@mikepearce.net
+* 2010 catchamonkey chris@sedlmayr.co.uk
+* 2011, 2012 Michael Nagel ubuntu@nailor.devzero.de
 
-h2. Usage
+License:
 
-Usage: show_status [options]
-
-Show Status is awesome. If you tell it a directory to look in, it'll scan
-through all the sub dirs looking for a .git directory. When it finds one it'll
-look to see if there are any changes and let you know. It can also push and
-pull to/from a remote location (like github.com) (but only if there are no
-changes.)
-Contact mike@mikepearce.net for any support.
-
-h2. Options
-
-<pre><code>
-  -h, --help            Show this help message and exit
-  -d DIR, --dir=DIRN    The directory to parse sub dirs from
-  -v, --verbose         Show the full detail of git status
-  -r REM, --remote=REM  Pull/Push will work with this remote
-  -p, --pull            Pull from the master (remotename:branchname)
-  --push                Push to the master (remotename:branchname)
-  ...                   There are more (not yet documented) options
-</code></pre>
-
-h2. Warranties/Guarantees
-
-None, you're on your own.
-If you'd like some help, mail me on mike@mikepearce.net
+* Mike Pearce: "Feel free to use it how you like, no licence required."
+* catchamonkey: "I guess whatever the original show_status's license is would apply to my patches. Other than that, I consider my additions to be public domain-ish or 2-clause BSD."
+* Michael Nagel: "Donated into the Public Domain."
