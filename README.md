@@ -41,6 +41,8 @@ If there are no changes it can also push and pull to/from a remote location.
   -b BRANCH, --branch=BRANCH
                         Warn if not on this branch
   --recursive           Recursively search for git repos
+  -e EXCLUDE, --exclude=EXCLUDE
+                        Regex to exclude directories
 ```
 
 ## Contact

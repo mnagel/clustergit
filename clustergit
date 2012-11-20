@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 # Grab some libraries
+import re
 import sys
 import os
 import commands
@@ -132,6 +133,13 @@ parser.add_option("--recursive",
                 help        = "Recursively search for git repos"
                 )
 
+parser.add_option("-e", "--exclude",
+                action      = "append",
+                dest        = "exclude",
+                default     = [],
+                help        = "Regex to exclude directories"
+                )
+
 # Now, parse the args
 (options, args) = parser.parse_args()
 
@@ -142,6 +150,13 @@ def show_error(error="Undefined Error!"):
     sys.stderr.write(error)
     sys.exit(1)
 
+def is_excluded(path):
+    for ex in options.exclude:
+        if re.search(ex, path):
+            if options.verbose:
+                print "skipping %s" % (path)
+            return True
+    return False
 
 def check(dirname):
     """
@@ -265,7 +280,8 @@ if __name__ == "__main__":
 
     dirties = 0
 
-    for (path, dirs, files) in os.walk(options.dirname):
+    for (path, dirs, files) in os.walk(options.dirname, topdown=True):
+        dirs[:] = [d for d in dirs if not is_excluded(os.path.join(path,d,""))]
         check(path)
         if not options.recursive:
             break
