@@ -180,7 +180,7 @@ def check(dirname):
 
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
-            out = commands.getoutput('cd '+ infile + '; LC_ALL=C git status')
+            out = commands.getoutput('cd "%s"; LC_ALL=C git status' % infile)
 
             # Mini?
             if not options.verbose:
@@ -223,9 +223,8 @@ def check(dirname):
                 if can_push and options.push:
                     # Push to the remote
                     push = commands.getoutput(
-                        'cd '+ infile +
-                        '; LC_ALL=C git push '+
-                        ' '.join(options.remote.split(":"))
+                        'cd "%s"; LC_ALL=C git push %s'
+                            % (infile, ' '.join(options.remote.split(":")))
                     )
                     if "[rejected]" in push:
                         messages.append(bc.FAIL + "Push rejected" + bc.ENDC)
@@ -235,9 +234,8 @@ def check(dirname):
                 if can_pull and options.pull:
                     # Pull from the remote
                     pull = commands.getoutput(
-                        'cd '+ infile +
-                        '; LC_ALL=C git pull '+
-                        ' '.join(options.remote.split(":"))
+                        'cd "%s"; LC_ALL=C git pull %s'
+                            % (infile, ' '.join(options.remote.split(":")))
                     )
                     if "Already up-to-date" in pull:
                         if not options.hide_clean:
