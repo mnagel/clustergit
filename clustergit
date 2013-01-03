@@ -242,6 +242,8 @@ def check(dirname):
                             messages.append(bc.OKGREEN + "Pulled nothing" + bc.ENDC)
                     elif "CONFLICT" in pull:
                         messages.append(bc.FAIL + "Pull conflict" + bc.ENDC)
+                    elif "fatal: No remote repository specified." in pull:
+                        messages.append(bc.WARNING + "Pull remote not configured" + bc.ENDC)
                     elif "fatal: " in pull:
                         messages.append(bc.FAIL + "Pull fatal" + bc.ENDC)
                     else:
