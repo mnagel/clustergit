@@ -194,7 +194,7 @@ def check(dirname):
                     messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
                     can_pull = False
                     clean = False
-                if 'nothing to commit (working directory clean)' in out:
+                if re.search(r'nothing to commit.?.?working directory clean.?', out):
                     messages.append(bc.OKBLUE + "No Changes" + bc.ENDC)
                     can_push = True
                 elif 'nothing added to commit but untracked files present' in out:
