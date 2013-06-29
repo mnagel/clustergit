@@ -266,7 +266,7 @@ def check(dirname):
 #-------------------
 # Now, onto the main event!
 #-------------------
-if __name__ == "__main__":
+try:
     if options.clear:
         os.system('clear')
 
@@ -296,3 +296,6 @@ if __name__ == "__main__":
 
     if not options.quiet:
         sys.stdout.write("Done\n")
+except (KeyboardInterrupt, SystemExit):
+        sys.stdout.write("\n")
+        pass
