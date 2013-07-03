@@ -1,9 +1,11 @@
 # clustergit
 
 clustergit allows you to run git commands on multiple repositories at once.
-This works well for at least: `git status, git pull, git push, ...`
+It is especially useful to run `git status` recursively on one folder.
 
-It is a renamed and slightly improved version of Mike Pearce's show_status.
+clustergit supports `git status`, `git pull`, `git push`, and more.
+
+It is a renamed and slightly improved version of Mike Pearce's `show_status`.
 
 ## Installation
 
