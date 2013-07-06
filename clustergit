@@ -158,6 +158,11 @@ def is_excluded(path):
             return True
     return False
 
+def run(command):
+    if options.verbose:
+        print "running %s" % (command)
+    return commands.getoutput(command)
+
 def check(dirname):
     """
     Check the subdirectories of a single directory.
@@ -180,7 +185,7 @@ def check(dirname):
 
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
-            out = commands.getoutput('cd "%s"; LC_ALL=C git status' % infile)
+            out = run('cd "%s"; LC_ALL=C git status' % infile)
 
             # Mini?
             if not options.verbose:
@@ -222,7 +227,7 @@ def check(dirname):
 
                 if can_push and options.push:
                     # Push to the remote
-                    push = commands.getoutput(
+                    push = run(
                         'cd "%s"; LC_ALL=C git push %s'
                             % (infile, ' '.join(options.remote.split(":")))
                     )
@@ -233,7 +238,7 @@ def check(dirname):
 
                 if can_pull and options.pull:
                     # Pull from the remote
-                    pull = commands.getoutput(
+                    pull = run(
                         'cd "%s"; LC_ALL=C git pull %s'
                             % (infile, ' '.join(options.remote.split(":")))
                     )
@@ -260,13 +265,13 @@ def check(dirname):
                 sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
 
             # Come out of the dir and into the next
-            commands.getoutput('cd ../')
+            run('cd ../')
 
 
 #-------------------
 # Now, onto the main event!
 #-------------------
-if __name__ == "__main__":
+try:
     if options.clear:
         os.system('clear')
 
@@ -296,3 +301,6 @@ if __name__ == "__main__":
 
     if not options.quiet:
         sys.stdout.write("Done\n")
+except (KeyboardInterrupt, SystemExit):
+        sys.stdout.write("\n")
+        pass
