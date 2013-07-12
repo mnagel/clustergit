@@ -181,7 +181,8 @@ def check(dirname):
         if os.path.exists( os.path.join(infile, ".git") ):
 
             if options.verbose:
-                sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
+                sys.stdout.write("\n")
+                sys.stdout.write("---------------- "+ infile +" -----------------\n")
 
             #Yay, we found one!
             gitted = True
@@ -189,6 +190,8 @@ def check(dirname):
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
             out = run('cd "%s"; LC_ALL=C git status' % infile)
+            if options.verbose:
+                sys.stdout.write(out + "\n")
 
             if options.relative:
                 infile = os.path.relpath(infile, options.dirname)
@@ -233,6 +236,8 @@ def check(dirname):
                     'cd "%s"; LC_ALL=C git push %s'
                         % (infile, ' '.join(options.remote.split(":")))
                 )
+                if options.verbose:
+                    sys.stdout.write(push + "\n")
                 if re.search(r'\[(remote )?rejected\]', push):
                     messages.append(bc.FAIL + "Push rejected" + bc.ENDC)
                 else:
@@ -244,6 +249,8 @@ def check(dirname):
                     'cd "%s"; LC_ALL=C git pull %s'
                         % (infile, ' '.join(options.remote.split(":")))
                 )
+                if options.verbose:
+                    sys.stdout.write(pull + "\n")
                 if "Already up-to-date" in pull:
                     if not options.hide_clean:
                         messages.append(bc.OKGREEN + "Pulled nothing" + bc.ENDC)
@@ -261,13 +268,11 @@ def check(dirname):
                 sys.stdout.write(", ".join(messages) + "\n")
                 sys.stdout.flush()
 
-            if options.verbose:
-                sys.stdout.write(out)
-                sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
-
             # Come out of the dir and into the next
             run('cd ../')
 
+            if options.verbose:
+                sys.stdout.write("---------------- "+ infile +" -----------------\n")
 
 #-------------------
 # Now, onto the main event!
