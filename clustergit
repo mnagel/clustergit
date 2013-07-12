@@ -233,7 +233,7 @@ def check(dirname):
                     'cd "%s"; LC_ALL=C git push %s'
                         % (infile, ' '.join(options.remote.split(":")))
                 )
-                if "[rejected]" in push:
+                if re.search(r'\[(remote )?rejected\]', push):
                     messages.append(bc.FAIL + "Push rejected" + bc.ENDC)
                 else:
                     messages.append(bc.OKBLUE + "Pushed OK" + bc.ENDC)
