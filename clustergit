@@ -214,7 +214,6 @@ def check(dirname):
                 messages.append(bc.FAIL + "Changes" + bc.ENDC)
                 can_pull = False
                 clean = False
-                print("dirty. clean %s push %s pull %s" % (clean, can_push, can_pull))
             if 'Your branch is ahead of' in out:
                 messages.append(bc.FAIL + "Unpushed commits" + bc.ENDC)
                 can_pull = False
