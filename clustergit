@@ -180,6 +180,9 @@ def check(dirname):
         #is there a .git file
         if os.path.exists( os.path.join(infile, ".git") ):
 
+            if options.verbose:
+                sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
+
             #Yay, we found one!
             gitted = True
 
@@ -187,80 +190,78 @@ def check(dirname):
             # and ask git for a status
             out = run('cd "%s"; LC_ALL=C git status' % infile)
 
-            # Mini?
-            if not options.verbose:
-                if options.relative:
-                    infile = os.path.relpath(infile, options.dirname)
-                messages = []
-                clean = True
-                can_push = False
-                can_pull = True
-                if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
-                    messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
-                    can_pull = False
-                    clean = False
-                if re.search(r'nothing to commit.?.?working directory clean.?', out):
-                    messages.append(bc.OKBLUE + "No Changes" + bc.ENDC)
-                    can_push = True
-                elif 'nothing added to commit but untracked files present' in out:
-                    messages.append(bc.WARNING + "Untracked files" + bc.ENDC)
-                    can_push = True
-                    clean = False
-                else:
-                    messages.append(bc.FAIL + "Changes" + bc.ENDC)
-                    can_pull = False
-                    clean = False
-                if 'Your branch is ahead of' in out:
-                    messages.append(bc.FAIL + "Unpushed commits" + bc.ENDC)
-                    can_pull = False
-                    clean = False
-                else:
-                    can_push = False
-
-                if clean:
-                    if not options.hide_clean:
-                        messages = [bc.OKGREEN + "Clean" + bc.ENDC]
-                    else:
-                        messages = []
-                else:
-                    dirties += 1
-
-                if can_push and options.push:
-                    # Push to the remote
-                    push = run(
-                        'cd "%s"; LC_ALL=C git push %s'
-                            % (infile, ' '.join(options.remote.split(":")))
-                    )
-                    if "[rejected]" in push:
-                        messages.append(bc.FAIL + "Push rejected" + bc.ENDC)
-                    else:
-                        messages.append(bc.OKBLUE + "Pushed OK" + bc.ENDC)
-
-                if can_pull and options.pull:
-                    # Pull from the remote
-                    pull = run(
-                        'cd "%s"; LC_ALL=C git pull %s'
-                            % (infile, ' '.join(options.remote.split(":")))
-                    )
-                    if "Already up-to-date" in pull:
-                        if not options.hide_clean:
-                            messages.append(bc.OKGREEN + "Pulled nothing" + bc.ENDC)
-                    elif "CONFLICT" in pull:
-                        messages.append(bc.FAIL + "Pull conflict" + bc.ENDC)
-                    elif "fatal: No remote repository specified." in pull:
-                        messages.append(bc.WARNING + "Pull remote not configured" + bc.ENDC)
-                    elif "fatal: " in pull:
-                        messages.append(bc.FAIL + "Pull fatal" + bc.ENDC)
-                    else:
-                        messages.append(bc.OKBLUE + "Pulled" + bc.ENDC)
-                # Write to screen
-                if not options.count and messages:
-                    sys.stdout.write(infile.ljust(options.align) + ": ")
-                    sys.stdout.write(", ".join(messages) + "\n")
-                    sys.stdout.flush()
+            if options.relative:
+                infile = os.path.relpath(infile, options.dirname)
+            messages = []
+            clean = True
+            can_push = False
+            can_pull = True
+            if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
+                messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
+                can_pull = False
+                clean = False
+            if re.search(r'nothing to commit.?.?working directory clean.?', out):
+                messages.append(bc.OKBLUE + "No Changes" + bc.ENDC)
+                can_push = True
+            elif 'nothing added to commit but untracked files present' in out:
+                messages.append(bc.WARNING + "Untracked files" + bc.ENDC)
+                can_push = True
+                clean = False
             else:
-                #Print some repo details
-                sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
+                messages.append(bc.FAIL + "Changes" + bc.ENDC)
+                can_pull = False
+                clean = False
+                print("dirty. clean %s push %s pull %s" % (clean, can_push, can_pull))
+            if 'Your branch is ahead of' in out:
+                messages.append(bc.FAIL + "Unpushed commits" + bc.ENDC)
+                can_pull = False
+                clean = False
+            else:
+                can_push = False
+
+            if clean:
+                if not options.hide_clean:
+                    messages = [bc.OKGREEN + "Clean" + bc.ENDC]
+                else:
+                    messages = []
+            else:
+                dirties += 1
+
+            if can_push and options.push:
+                # Push to the remote
+                push = run(
+                    'cd "%s"; LC_ALL=C git push %s'
+                        % (infile, ' '.join(options.remote.split(":")))
+                )
+                if "[rejected]" in push:
+                    messages.append(bc.FAIL + "Push rejected" + bc.ENDC)
+                else:
+                    messages.append(bc.OKBLUE + "Pushed OK" + bc.ENDC)
+
+            if can_pull and options.pull:
+                # Pull from the remote
+                pull = run(
+                    'cd "%s"; LC_ALL=C git pull %s'
+                        % (infile, ' '.join(options.remote.split(":")))
+                )
+                if "Already up-to-date" in pull:
+                    if not options.hide_clean:
+                        messages.append(bc.OKGREEN + "Pulled nothing" + bc.ENDC)
+                elif "CONFLICT" in pull:
+                    messages.append(bc.FAIL + "Pull conflict" + bc.ENDC)
+                elif "fatal: No remote repository specified." in pull:
+                    messages.append(bc.WARNING + "Pull remote not configured" + bc.ENDC)
+                elif "fatal: " in pull:
+                    messages.append(bc.FAIL + "Pull fatal" + bc.ENDC)
+                else:
+                    messages.append(bc.OKBLUE + "Pulled" + bc.ENDC)
+            
+            if not options.count and messages:
+                sys.stdout.write(infile.ljust(options.align) + ": ")
+                sys.stdout.write(", ".join(messages) + "\n")
+                sys.stdout.flush()
+
+            if options.verbose:
                 sys.stdout.write(out)
                 sys.stdout.write("\n---------------- "+ infile +" -----------------\n")
 
