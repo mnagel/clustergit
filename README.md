@@ -45,6 +45,8 @@ If there are no changes it can also push and pull to/from a remote location.
   --recursive           Recursively search for git repos
   -e EXCLUDE, --exclude=EXCLUDE
                         Regex to exclude directories
+  -B CBRANCH, --checkout-branch=CBRANCH
+                        Checkout branch
 ```
 
 ## Contact

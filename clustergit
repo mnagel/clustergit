@@ -142,9 +142,9 @@ parser.add_option("-e", "--exclude",
 
 parser.add_option("-B", "--checkout-branch",
                 action      = "store",
-                dest        = "checkoutbranch",
+                dest        = "cbranch",
                 default     = [],
-                help        = "Switch branch"
+                help        = "Checkout branch"
                 )
 
 # Now, parse the args
@@ -269,10 +269,10 @@ def check(dirname):
                 else:
                     messages.append(bc.OKBLUE + "Pulled" + bc.ENDC)
 
-            if options.checkoutbranch:
+            if options.cbranch:
                 checkoutbranch = run(
                     'cd "%s"; LC_ALL=C git checkout %s'
-                        % (infile, options.checkoutbranch)
+                        % (infile, options.cbranch)
                 )
                 if options.verbose:
                     sys.stdout.write(pull + "\n")
