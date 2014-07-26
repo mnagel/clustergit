@@ -132,6 +132,13 @@ def read_arguments(args):
                 help        = "Regex to exclude directories"
                 )
 
+    parser.add_option("-B", "--checkout-branch",
+                action      = "store",
+                dest        = "cbranch",
+                default     = [],
+                help        = "Checkout branch"
+                )
+
     (options, args) = parser.parse_args(args)
     return options
 
@@ -251,7 +258,22 @@ def check(dirname, options):
                     messages.append(colorize(Colors.FAIL, "Pull fatal"))
                 else:
                     messages.append(colorize(Colors.OKBLUE, "Pulled"))
-            
+
+            if options.cbranch:
+                checkoutbranch = run(
+                    'cd "%s"; LC_ALL=C git checkout %s'
+                        % (infile, options.cbranch), options
+                )
+                if options.verbose:
+                    sys.stdout.write(pull + "\n")
+                if "Already on" in checkoutbranch:
+                    if not options.hide_clean:
+                        messages.append(colorize(Colors.OKGREEN, "No action"))
+                elif "error: " in checkoutbranch:
+                    messages.append(colorize(Colors.FAIL, "Checkout failed"))
+                else:
+                    messages.append(colorize(Colors.OKBLUE, "Checkout successful"))
+
             if not options.count and messages:
                 sys.stdout.write(infile.ljust(options.align) + ": ")
                 sys.stdout.write(", ".join(messages) + "\n")

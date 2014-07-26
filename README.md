@@ -45,6 +45,8 @@ If there are no changes it can also push and pull to/from a remote location.
   --recursive           Recursively search for git repos
   -e EXCLUDE, --exclude=EXCLUDE
                         Regex to exclude directories
+  -B CBRANCH, --checkout-branch=CBRANCH
+                        Checkout branch
 ```
 
 ## Contact
@@ -53,8 +55,8 @@ via https://github.com/mnagel/clustergit
 
 ## Credits
 
-show_status by Mike Pearce: https://github.com/MikePearce/Git-Status
-patches to show_status by ilor: https://github.com/ilor/Git-Status
+* show_status by Mike Pearce: https://github.com/MikePearce/Git-Status
+* patches to show_status by ilor: https://github.com/ilor/Git-Status
 
 ## License
 
