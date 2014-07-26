@@ -1,0 +1,7 @@
+apidoc
+cover
+.coverage
+pylint.html
+
+*.log
+*.pyc

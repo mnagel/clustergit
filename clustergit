@@ -7,7 +7,12 @@ import os
 import commands
 from optparse import OptionParser
 
-class bcolors:
+def colorize(color, message):
+    return "%s%s%s" % (color, message, Colors.ENDC)
+def colorize_off(color, message):
+    return message
+
+class Colors:
     HEADER = '\033[95m'  # unused
     OKBLUE = '\033[94m'  # write operation succeeded
     OKGREEN = '\033[92m' # readonly operation succeeded
@@ -15,40 +20,27 @@ class bcolors:
     FAIL = '\033[91m'    # operation did not succeed
     ENDC = '\033[0m'     # reset color
 
-    def disable(self):
-        self.HEADER = ''
-        self.OKBLUE = ''
-        self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
-        self.ENDC = ''
-
-
-# Setup some stuff
-dirname = './'
-gitted  = False
-mini    = True
-
-parser = OptionParser(description="""
-clustergit will scan through all subdirectories looking for a .git directory.
-When it finds one it'll look to see if there are any changes and let you know.
-If there are no changes it can also push and pull to/from a remote location.
-""".strip())
-parser.add_option("-d", "--dir",
+def read_arguments(args):
+    parser = OptionParser(description="""
+    clustergit will scan through all subdirectories looking for a .git directory.
+    When it finds one it'll look to see if there are any changes and let you know.
+    If there are no changes it can also push and pull to/from a remote location.
+    """.strip())
+    parser.add_option("-d", "--dir",
                     dest    = "dirname",
                     action  = "store",
                     help    = "The directory to parse sub dirs from",
                     default = "."
                     )
 
-parser.add_option("-v", "--verbose",
+    parser.add_option("-v", "--verbose",
                   action    = "store_true",
                   dest      = "verbose",
                   default   = False,
                   help      = "Show the full detail of git status"
                   )
 
-parser.add_option("-a", "--align",
+    parser.add_option("-a", "--align",
                   action    = "store",
                   dest      = "align",
                   default   = 40,
@@ -56,101 +48,99 @@ parser.add_option("-a", "--align",
                   help      = "Repo name align (space padding)"
                   )
 
-parser.add_option("-r", "--remote",
+    parser.add_option("-r", "--remote",
                 action      = "store",
                 dest        = "remote",
                 default     = "",
                 help        = "Set the remote name (remotename:branchname)"
                 )
 
-parser.add_option("--push",
+    parser.add_option("--push",
                 action      = "store_true",
                 dest        = "push",
                 default     = False,
                 help        = "Do a 'git push' if you've set a remote with -r it will push to there"
                 )
 
-parser.add_option("-p", "--pull",
+    parser.add_option("-p", "--pull",
                 action      = "store_true",
                 dest        = "pull",
                 default     = False,
                 help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
                 )
 
-parser.add_option("-c", "--clear",
+    parser.add_option("-c", "--clear",
                 action      = "store_true",
                 dest        = "clear",
                 default     = False,
                 help        = "Clear screen on startup"
                 )
 
-parser.add_option("-C", "--count-dirty",
+    parser.add_option("-C", "--count-dirty",
                 action      = "store_true",
                 dest        = "count",
                 default     = False,
                 help        = "Only display a count of not-clean repos"
                 )
 
-parser.add_option("-q", "--quiet",
+    parser.add_option("-q", "--quiet",
                 action      = "store_true",
                 dest        = "quiet",
                 default     = False,
                 help        = "Skip startup info"
                 )
 
-parser.add_option("-H", "--hide-clean",
+    parser.add_option("-H", "--hide-clean",
                 action      = "store_true",
                 dest        = "hide_clean",
                 default     = False,
                 help        = "Hide clean repos"
                 )
 
-parser.add_option("-R", "--relative",
+    parser.add_option("-R", "--relative",
                 action      = "store_true",
                 dest        = "relative",
                 default     = False,
                 help        = "Print relative paths"
                 )
 
-parser.add_option("-n", "--no-colors",
+    parser.add_option("-n", "--no-colors",
                 action      = "store_false",
                 dest        = "colors",
                 default     = True,
                 help        = "Disable ANSI color output"
                 )
 
-parser.add_option("-b", "--branch",
+    parser.add_option("-b", "--branch",
                 action      = "store",
                 dest        = "branch",
                 default     = "master",
                 help        = "Warn if not on this branch"
                 )
 
-parser.add_option("--recursive",
+    parser.add_option("--recursive",
                 action      = "store_true",
                 dest        = "recursive",
                 default     = False,
                 help        = "Recursively search for git repos"
                 )
 
-parser.add_option("-e", "--exclude",
+    parser.add_option("-e", "--exclude",
                 action      = "append",
                 dest        = "exclude",
                 default     = [],
                 help        = "Regex to exclude directories"
                 )
 
-# Now, parse the args
-(options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(args)
+    return options
 
-#-------------------
 def show_error(error="Undefined Error!"):
-#-------------------
     """Writes an error to stderr"""
     sys.stderr.write(error)
     sys.exit(1)
 
-def is_excluded(path):
+def is_excluded(path, options):
     for ex in options.exclude:
         if re.search(ex, path):
             if options.verbose:
@@ -158,18 +148,18 @@ def is_excluded(path):
             return True
     return False
 
-def run(command):
+def run(command, options):
     if options.verbose:
         print "running %s" % (command)
     return commands.getoutput(command)
 
-def check(dirname):
+def check(dirname, options):
     """
     Check the subdirectories of a single directory.
     See if they are versioned in git and display the requested information.
     """
-    # this method was extracted after the fact, but we need to write these...
-    global gitted, dirties
+    gitted = False
+    dirties = 0
 
     # See whats here
     files = os.listdir(dirname)
@@ -189,7 +179,7 @@ def check(dirname):
 
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
-            out = run('cd "%s"; LC_ALL=C git status' % infile)
+            out = run('cd "%s"; LC_ALL=C git status' % infile, options)
             if options.verbose:
                 sys.stdout.write(out + "\n")
 
@@ -200,22 +190,22 @@ def check(dirname):
             can_push = False
             can_pull = True
             if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
-                messages.append(bc.WARNING + "Not on branch %s" % options.branch + bc.ENDC)
+                messages.append(colorize(Colors.WARNING, "Not on branch %s" % options.branch))
                 can_pull = False
                 clean = False
             if re.search(r'nothing to commit.?.?working directory clean.?', out):
-                messages.append(bc.OKBLUE + "No Changes" + bc.ENDC)
+                messages.append(colorize(Colors.OKBLUE, "No Changes"))
                 can_push = True
             elif 'nothing added to commit but untracked files present' in out:
-                messages.append(bc.WARNING + "Untracked files" + bc.ENDC)
+                messages.append(colorize(Colors.WARNING, "Untracked files"))
                 can_push = True
                 clean = False
             else:
-                messages.append(bc.FAIL + "Changes" + bc.ENDC)
+                messages.append(colorize(Colors.FAIL, "Changes"))
                 can_pull = False
                 clean = False
             if 'Your branch is ahead of' in out:
-                messages.append(bc.FAIL + "Unpushed commits" + bc.ENDC)
+                messages.append(colorize(Colors.FAIL, "Unpushed commits"))
                 can_pull = False
                 clean = False
             else:
@@ -223,7 +213,7 @@ def check(dirname):
 
             if clean:
                 if not options.hide_clean:
-                    messages = [bc.OKGREEN + "Clean" + bc.ENDC]
+                    messages = [colorize(Colors.OKGREEN, "Clean")]
                 else:
                     messages = []
             else:
@@ -233,34 +223,34 @@ def check(dirname):
                 # Push to the remote
                 push = run(
                     'cd "%s"; LC_ALL=C git push %s'
-                        % (infile, ' '.join(options.remote.split(":")))
+                        % (infile, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
                     sys.stdout.write(push + "\n")
                 if re.search(r'\[(remote )?rejected\]', push):
-                    messages.append(bc.FAIL + "Push rejected" + bc.ENDC)
+                    messages.append(colorize(Colors.FAIL, "Push rejected"))
                 else:
-                    messages.append(bc.OKBLUE + "Pushed OK" + bc.ENDC)
+                    messages.append(colorize(Colors.OKBLUE, "Pushed OK"))
 
             if can_pull and options.pull:
                 # Pull from the remote
                 pull = run(
                     'cd "%s"; LC_ALL=C git pull %s'
-                        % (infile, ' '.join(options.remote.split(":")))
+                        % (infile, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
                     sys.stdout.write(pull + "\n")
                 if "Already up-to-date" in pull:
                     if not options.hide_clean:
-                        messages.append(bc.OKGREEN + "Pulled nothing" + bc.ENDC)
+                        messages.append(colorize(Colors.OKGREEN, "Pulled nothing"))
                 elif "CONFLICT" in pull:
-                    messages.append(bc.FAIL + "Pull conflict" + bc.ENDC)
+                    messages.append(colorize(Colors.FAIL, "Pull conflict"))
                 elif "fatal: No remote repository specified." in pull:
-                    messages.append(bc.WARNING + "Pull remote not configured" + bc.ENDC)
+                    messages.append(colorize(Colors.WARNING, "Pull remote not configured"))
                 elif "fatal: " in pull:
-                    messages.append(bc.FAIL + "Pull fatal" + bc.ENDC)
+                    messages.append(colorize(Colors.FAIL, "Pull fatal"))
                 else:
-                    messages.append(bc.OKBLUE + "Pulled" + bc.ENDC)
+                    messages.append(colorize(Colors.OKBLUE, "Pulled"))
             
             if not options.count and messages:
                 sys.stdout.write(infile.ljust(options.align) + ": ")
@@ -268,44 +258,53 @@ def check(dirname):
                 sys.stdout.flush()
 
             # Come out of the dir and into the next
-            run('cd ../')
+            run('cd ../', options)
 
             if options.verbose:
                 sys.stdout.write("---------------- "+ infile +" -----------------\n")
+    return gitted, dirties
 
 #-------------------
 # Now, onto the main event!
 #-------------------
-try:
-    if options.clear:
-        os.system('clear')
 
-    if not options.quiet:
-        sys.stdout.write('Starting git status...\n')
-        sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
+def main(args):
+    try:
+        options = read_arguments(args)
+        if options.clear:
+            os.system('clear')
 
-    bc = bcolors()
-    if not options.colors:
-        bc.disable()
+        if not options.quiet:
+            sys.stdout.write('Starting git status...\n')
+            sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
 
-    dirties = 0
+        if not options.colors:
+            global colorize
+            colorize = colorize_off
 
-    for (path, dirs, files) in os.walk(options.dirname, topdown=True):
-        dirs[:] = [d for d in dirs if not is_excluded(os.path.join(path,d,""))]
-        check(path)
-        if not options.recursive:
-            break
+        gitted = False
+        dirties = 0
 
-    if not gitted:
-        show_error("Error: None of those sub directories had a .git file.\n")
+        for (path, dirs, files) in os.walk(options.dirname, topdown=True):
+            dirs[:] = [d for d in dirs if not is_excluded(os.path.join(path, d, ""), options)]
+            new_gitted, new_dirties = check(path, options)
+            gitted = gitted or new_gitted
+            dirties += new_dirties
+            if not options.recursive:
+                break
 
-    if options.count:
-        sys.stdout.write(str(dirties) + "\n")
-    if dirties == 0 and options.hide_clean:
-        sys.stdout.write("All repos clean\n")
+        if not gitted:
+            show_error("Error: None of those sub directories had a .git file.\n")
 
-    if not options.quiet:
-        sys.stdout.write("Done\n")
-except (KeyboardInterrupt, SystemExit):
+        if options.count:
+            sys.stdout.write(str(dirties) + "\n")
+        if dirties == 0 and options.hide_clean:
+            sys.stdout.write("All repos clean\n")
+
+        if not options.quiet:
+            sys.stdout.write("Done\n")
+    except (KeyboardInterrupt, SystemExit):
         sys.stdout.write("\n")
-        pass
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

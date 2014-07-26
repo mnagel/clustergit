@@ -1,0 +1,9 @@
+# .coveragerc to control coverage.py
+[run]
+branch = True
+omit = /usr/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
