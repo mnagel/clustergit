@@ -47,6 +47,8 @@ If there are no changes it can also push and pull to/from a remote location.
                         Regex to exclude directories
   -B CBRANCH, --checkout-branch=CBRANCH
                         Checkout branch
+  --warn-unversioned    Prints a warning if a directory is not under git
+                        version control
 ```
 
 ## Contact
