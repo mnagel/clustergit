@@ -142,7 +142,7 @@ def read_arguments(args):
     parser.add_option("--warn-unversioned",
                 action      = "store_true",
                 dest        = "unversioned",
-                default     = [],
+                default     = False,
                 help        = "Prints a warning if a directory is not under git version control"
                 )
 
