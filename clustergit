@@ -18,7 +18,6 @@ class Colors:
     OKGREEN = '\033[92m' # readonly operation succeeded
     WARNING = '\033[93m' # operation succeeded with non-default result
     FAIL = '\033[91m'    # operation did not succeed
-    NOGIT = '\033[96m'
     ENDC = '\033[0m'     # reset color
 
 def read_arguments(args):
@@ -138,6 +137,13 @@ def read_arguments(args):
                 dest        = "cbranch",
                 default     = [],
                 help        = "Checkout branch"
+                )
+
+    parser.add_option("--warn-unversioned",
+                action      = "store_true",
+                dest        = "unversioned",
+                default     = [],
+                help        = "Prints a warning if a directory is not under git version control"
                 )
 
     (options, args) = parser.parse_args(args)
@@ -285,9 +291,9 @@ def check(dirname, options):
 
             if options.verbose:
                 sys.stdout.write("---------------- "+ infile +" -----------------\n")
-        elif not infile.startswith("./."):
+        elif options.unversioned and not infile.startswith("./.") and os.path.isdir(infile):
             sys.stdout.write(infile.ljust(options.align) + ": ")
-            sys.stdout.write(colorize(Colors.NOGIT, "Not a GIT repository")+"\n")
+            sys.stdout.write(colorize(Colors.WARNING, "Not a GIT repository")+"\n")
             sys.stdout.flush()
     return gitted, dirties
 
