@@ -204,7 +204,8 @@ def check(dirname, options):
             can_push = False
             can_pull = True
             if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
-                messages.append(colorize(Colors.WARNING, "Not on branch %s" % options.branch))
+                branch = out.splitlines()[0].replace("On branch ","")
+                messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
                 can_pull = False
                 clean = False
             if re.search(r'nothing to commit.?.?working directory clean.?', out):
