@@ -177,6 +177,7 @@ def check(dirname, options):
 
     # See whats here
     files = os.listdir(dirname)
+    files[:] = [f for f in files if not is_excluded(os.path.join(dirname, f), options)]
     files.sort()
     for infile in files:
         infile = os.path.join(dirname, infile)
@@ -320,7 +321,6 @@ def main(args):
         dirties = 0
 
         for (path, dirs, files) in os.walk(options.dirname, topdown=True):
-            dirs[:] = [d for d in dirs if not is_excluded(os.path.join(path, d, ""), options)]
             new_gitted, new_dirties = check(path, options)
             gitted = gitted or new_gitted
             dirties += new_dirties
