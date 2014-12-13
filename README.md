@@ -7,6 +7,18 @@ clustergit supports `git status`, `git pull`, `git push`, and more.
 
 It is a renamed and slightly improved version of Mike Pearce's `show_status`.
 
+## Screenshot
+![clustergit screenshot](/doc/clustergit.png?raw=true "clustergit screenshot")
+
+To reproduce the above locally, run:
+```
+cd doc
+bash demo.sh
+cd demo
+clustergit
+clustergit --warn-unversioned --pull
+```
+
 ## Installation
 
 Make the script executable and drop it somewhere in your $PATH.
@@ -70,7 +82,7 @@ Copyright:
 
 * 2010 Mike Pearce mike@mikepearce.net
 * 2010 catchamonkey chris@sedlmayr.co.uk
-* 2011, 2012 Michael Nagel ubuntu@nailor.devzero.de
+* 2011-2014 Michael Nagel ubuntu@nailor.devzero.de
 
 License:
 
