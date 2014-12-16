@@ -42,12 +42,12 @@ Scanning sub directories of .
         sys.stdout = mystdout = StringIO()
         sys.stderr = mystderr = StringIO()
 
-        clustergit.main(['-d', dirpath, '--no-color'])
+        clustergit.main(['-d', dirpath, '--no-color', '--align=0'])
 
         actual_out = mystdout.getvalue()
         expected_out = """Starting git status...
 Scanning sub directories of %s
-%s/mygit                    : Changes
+%s/mygit: Changes
 Done
 """ % (dirpath, dirpath)
         actual_err = mystderr.getvalue()
