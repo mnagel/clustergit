@@ -2,13 +2,6 @@
 
 """ run git commands on multiple git clones https://github.com/mnagel/clustergit """
 
-__author__ = "Michael Nagel, catchamonkey, and Mike Pearce"
-__credits__ = ["Michael Nagel", "catchamonkey", "Mike Pearce"]
-__license__ = "2-clause BSD"
-__version__ = "0.5"
-__maintainer__ = "Michael Nagel"
-__status__ = "Beta"
-
 
 # Grab some libraries
 import re
