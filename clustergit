@@ -1,5 +1,8 @@
 #! /usr/bin/env python
 
+""" run git commands on multiple git clones https://github.com/mnagel/clustergit """
+
+
 # Grab some libraries
 import re
 import sys
