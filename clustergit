@@ -2,12 +2,17 @@
 
 """ run git commands on multiple git clones https://github.com/mnagel/clustergit """
 
-
-# Grab some libraries
+from __future__ import print_function
 import re
 import sys
 import os
-import commands
+try:
+    import commands
+except Exception:
+    # python3
+    import subprocess as commands 
+    commands.get_output = commands.check_output
+
 from optparse import OptionParser
 
 def colorize(color, message):
@@ -161,13 +166,13 @@ def is_excluded(path, options):
     for ex in options.exclude:
         if re.search(ex, path):
             if options.verbose:
-                print "skipping %s" % (path)
+                print("skipping %s" % (path))
             return True
     return False
 
 def run(command, options):
     if options.verbose:
-        print "running %s" % (command)
+        print("running %s" % (command))
     return commands.getoutput(command)
 
 def check(dirname, options):
