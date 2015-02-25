@@ -10,7 +10,7 @@ try:
     import commands
 except Exception:
     # python3
-    import subprocess as commands 
+    import subprocess as commands
     commands.get_output = commands.check_output
 
 from optparse import OptionParser
