@@ -18,9 +18,15 @@ from optparse import OptionParser
 def colorize(color, message):
     return "%s%s%s" % (color, message, Colors.ENDC)
 def colorize_off(color, message):
+    for color in [Colors.BOLD, Colors.UNDERLINE, Colors.HEADER,
+                  Colors.OKBLUE, Colors.OKGREEN,
+                  Colors.WARNING, Colors.FAIL, Colors.ENDC]:
+        message = message.replace(color, '')
     return message
 
 class Colors:
+    BOLD = '\033[1m'     # unused
+    UNDERLINE = '\033[4m'# unused
     HEADER = '\033[95m'  # unused
     OKBLUE = '\033[94m'  # write operation succeeded
     OKGREEN = '\033[92m' # readonly operation succeeded
@@ -290,6 +296,8 @@ def check(dirname, options):
                         % (infile, options.command),
                     options
                 )
+                if not options.colors:
+                    cmd = colorize_off('', cmd)
                 if not options.quiet:
                     messages.append('\n' + cmd[:-2])
                     if not cmd[-1] is '0':
