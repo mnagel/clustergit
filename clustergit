@@ -77,6 +77,14 @@ def read_arguments(args):
                 help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
                 )
 
+    parser.add_option("--exec", "--execute",
+                action      = "store",
+                dest        = "command",
+                type        = "string",
+                default     = "",
+                help        = "Execute a shell command in each repository"
+                )
+
     parser.add_option("-c", "--clear",
                 action      = "store_true",
                 dest        = "clear",
@@ -275,6 +283,17 @@ def check(dirname, options):
                     messages.append(colorize(Colors.FAIL, "Pull fatal"))
                 else:
                     messages.append(colorize(Colors.OKBLUE, "Pulled"))
+
+            if options.command:
+                cmd = run(
+                    'cd "%s"; LC_ALL=C %s; echo $?'
+                        % (infile, options.command),
+                    options
+                )
+                if not options.quiet:
+                    messages.append('\n' + cmd[:-2])
+                    if not cmd[-1] is '0':
+                        show_error(colorize(Colors.FAIL, "This command exited with a not 0 status."))
 
             if options.cbranch:
                 checkoutbranch = run(
