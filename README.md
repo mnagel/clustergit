@@ -11,7 +11,7 @@ It is a renamed and slightly improved version of Mike Pearce's `show_status`.
 ![clustergit screenshot](/doc/clustergit.png?raw=true "clustergit screenshot")
 
 To reproduce the above locally, run:
-```
+```bash
 cd doc
 bash demo.sh
 cd demo
@@ -22,6 +22,13 @@ clustergit --warn-unversioned --pull
 ## Installation
 
 Make the script executable and drop it somewhere in your $PATH.
+
+## Requirements
+
+ * python2 or python3
+ * argparse/ArgParse
+ * argcomplete
+ * commands/subprocess
 
 ## Usage
 
@@ -83,9 +90,11 @@ Copyright:
 * 2010 Mike Pearce mike@mikepearce.net
 * 2010 catchamonkey chris@sedlmayr.co.uk
 * 2011-2014 Michael Nagel ubuntu@nailor.devzero.de
+* 2015 sedrubal sebastian.endres@online.de
 
 License:
 
 * Mike Pearce: "Feel free to use it how you like, no licence required."
 * catchamonkey: "I guess whatever the original show_status's license is would apply to my patches. Other than that, I consider my additions to be public domain-ish or 2-clause BSD."
 * Michael Nagel: "Donated into the Public Domain."
+* sedrubal: "Donated into the Public Domain. Whenever this project gets a 'real' license, I'd prefer a GPL"
