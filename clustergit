@@ -301,7 +301,9 @@ def check(dirname, options):
                 if not options.quiet:
                     messages.append('\n' + cmd[:-2])
                     if not cmd[-1] is '0':
-                        show_error(colorize(Colors.FAIL, "This command exited with a not 0 status."))
+                        show_error(colorize(Colors.FAIL,
+                                            "The command exited with status {s} in {r}".format(s=cmd[-1],r=infile) +
+                                            "\nThe output was:" + cmd[:-2]))
 
             if options.cbranch:
                 checkoutbranch = run(
