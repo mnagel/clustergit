@@ -6,14 +6,18 @@ from __future__ import print_function
 import re
 import sys
 import os
+from argcomplete import autocomplete
+try:
+    from argparse import ArgumentParser
+except Exception:
+    # python3
+    from ArgParse import ArgumentParser
 try:
     import commands
 except Exception:
     # python3
     import subprocess as commands
     commands.get_output = commands.check_output
-
-from optparse import OptionParser
 
 def colorize(color, message):
     return "%s%s%s" % (color, message, Colors.ENDC)
@@ -28,133 +32,134 @@ class Colors:
     FAIL = '\033[91m'    # operation did not succeed
     ENDC = '\033[0m'     # reset color
 
-def read_arguments(args):
-    parser = OptionParser(description="""
+def read_arguments():
+    parser = ArgumentParser(description="""
     clustergit will scan through all subdirectories looking for a .git directory.
     When it finds one it'll look to see if there are any changes and let you know.
     If there are no changes it can also push and pull to/from a remote location.
     """.strip())
-    parser.add_option("-d", "--dir",
+    parser.add_argument("-d", "--dir",
                     dest    = "dirname",
                     action  = "store",
                     help    = "The directory to parse sub dirs from",
                     default = "."
                     )
 
-    parser.add_option("-v", "--verbose",
+    parser.add_argument("-v", "--verbose",
                   action    = "store_true",
                   dest      = "verbose",
                   default   = False,
                   help      = "Show the full detail of git status"
                   )
 
-    parser.add_option("-a", "--align",
+    parser.add_argument("-a", "--align",
                   action    = "store",
                   dest      = "align",
                   default   = 40,
-                  type      = "int",
+                  type      = int,
                   help      = "Repo name align (space padding)"
                   )
 
-    parser.add_option("-r", "--remote",
+    parser.add_argument("-r", "--remote",
                 action      = "store",
                 dest        = "remote",
                 default     = "",
                 help        = "Set the remote name (remotename:branchname)"
                 )
 
-    parser.add_option("--push",
+    parser.add_argument("--push",
                 action      = "store_true",
                 dest        = "push",
                 default     = False,
                 help        = "Do a 'git push' if you've set a remote with -r it will push to there"
                 )
 
-    parser.add_option("-p", "--pull",
+    parser.add_argument("-p", "--pull",
                 action      = "store_true",
                 dest        = "pull",
                 default     = False,
                 help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
                 )
 
-    parser.add_option("-c", "--clear",
+    parser.add_argument("-c", "--clear",
                 action      = "store_true",
                 dest        = "clear",
                 default     = False,
                 help        = "Clear screen on startup"
                 )
 
-    parser.add_option("-C", "--count-dirty",
+    parser.add_argument("-C", "--count-dirty",
                 action      = "store_true",
                 dest        = "count",
                 default     = False,
                 help        = "Only display a count of not-clean repos"
                 )
 
-    parser.add_option("-q", "--quiet",
+    parser.add_argument("-q", "--quiet",
                 action      = "store_true",
                 dest        = "quiet",
                 default     = False,
                 help        = "Skip startup info"
                 )
 
-    parser.add_option("-H", "--hide-clean",
+    parser.add_argument("-H", "--hide-clean",
                 action      = "store_true",
                 dest        = "hide_clean",
                 default     = False,
                 help        = "Hide clean repos"
                 )
 
-    parser.add_option("-R", "--relative",
+    parser.add_argument("-R", "--relative",
                 action      = "store_true",
                 dest        = "relative",
                 default     = False,
                 help        = "Print relative paths"
                 )
 
-    parser.add_option("-n", "--no-colors",
+    parser.add_argument("-n", "--no-colors",
                 action      = "store_false",
                 dest        = "colors",
                 default     = True,
                 help        = "Disable ANSI color output"
                 )
 
-    parser.add_option("-b", "--branch",
+    parser.add_argument("-b", "--branch",
                 action      = "store",
                 dest        = "branch",
                 default     = "master",
                 help        = "Warn if not on this branch"
                 )
 
-    parser.add_option("--recursive",
+    parser.add_argument("--recursive",
                 action      = "store_true",
                 dest        = "recursive",
                 default     = False,
                 help        = "Recursively search for git repos"
                 )
 
-    parser.add_option("-e", "--exclude",
+    parser.add_argument("-e", "--exclude",
                 action      = "append",
                 dest        = "exclude",
                 default     = [],
                 help        = "Regex to exclude directories"
                 )
 
-    parser.add_option("-B", "--checkout-branch",
+    parser.add_argument("-B", "--checkout-branch",
                 action      = "store",
                 dest        = "cbranch",
                 default     = [],
                 help        = "Checkout branch"
                 )
 
-    parser.add_option("--warn-unversioned",
+    parser.add_argument("--warn-unversioned",
                 action      = "store_true",
                 dest        = "unversioned",
                 default     = False,
                 help        = "Prints a warning if a directory is not under git version control"
                 )
 
-    (options, args) = parser.parse_args(args)
+    autocomplete(parser)
+    options = parser.parse_args()
     return options
 
 def show_error(error="Undefined Error!"):
@@ -311,9 +316,9 @@ def check(dirname, options):
 # Now, onto the main event!
 #-------------------
 
-def main(args):
+def main():
     try:
-        options = read_arguments(args)
+        options = read_arguments()
         if options.clear:
             os.system('clear')
 
@@ -349,4 +354,4 @@ def main(args):
         sys.stdout.write("\n")
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
