@@ -27,7 +27,7 @@ Make the script executable and drop it somewhere in your $PATH.
 
  * python2 or python3
  * argparse/ArgParse
- * argcomplete
+ * argcomplete (recommended)
  * commands/subprocess
 
 ## Usage
