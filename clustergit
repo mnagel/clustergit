@@ -291,19 +291,20 @@ def check(dirname, options):
                     messages.append(colorize(Colors.OKBLUE, "Pulled"))
 
             if options.command:
-                cmd = run(
-                    'cd "%s"; LC_ALL=C %s; echo $?'
-                        % (infile, options.command),
+                output = run(
+                    'cd "%s"; LC_ALL=C %s; echo $?'% (infile, options.command),
                     options
                 )
+                exit_status = output[-1]  # TODO: fails for exit status more than 2 digits
+                output = output[:-2]
                 if not options.colors:
-                    cmd = colorize_off('', cmd)
+                    output = colorize_off('', output)
                 if not options.quiet:
-                    messages.append('\n' + cmd[:-2])
-                    if not cmd[-1] is '0':
+                    messages.append('\n' + output)
+                    if not exit_status is '0':
                         show_error(colorize(Colors.FAIL,
-                                            "The command exited with status {s} in {r}".format(s=cmd[-1],r=infile) +
-                                            "\nThe output was:" + cmd[:-2]))
+                                            "The command exited with status {s} in {r}".format(s=exit_status, r=infile) +
+                                            "\nThe output was:" + output))
 
             if options.cbranch:
                 checkoutbranch = run(
