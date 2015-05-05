@@ -11,6 +11,7 @@ It is a renamed and slightly improved version of Mike Pearce's `show_status`.
 ![clustergit screenshot](/doc/clustergit.png?raw=true "clustergit screenshot")
 
 To reproduce the above locally, run:
+
 ```bash
 cd doc
 bash demo.sh

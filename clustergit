@@ -37,7 +37,7 @@ class Colors:
     FAIL = '\033[91m'    # operation did not succeed
     ENDC = '\033[0m'     # reset color
 
-def read_arguments():
+def read_arguments(args):
     parser = ArgumentParser(description="""
     clustergit will scan through all subdirectories looking for a .git directory.
     When it finds one it'll look to see if there are any changes and let you know.
@@ -165,7 +165,7 @@ def read_arguments():
 
     if use_argcomplete:
         autocomplete(parser)
-    options = parser.parse_args()
+    options = parser.parse_args(args)
     return options
 
 def show_error(error="Undefined Error!"):
@@ -322,9 +322,9 @@ def check(dirname, options):
 # Now, onto the main event!
 #-------------------
 
-def main():
+def main(args):
     try:
-        options = read_arguments()
+        options = read_arguments(args)
         if options.clear:
             os.system('clear')
 
@@ -360,4 +360,4 @@ def main():
         sys.stdout.write("\n")
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
