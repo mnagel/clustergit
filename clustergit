@@ -187,7 +187,7 @@ def is_excluded(path, options):
 def run(command, options):
     if options.verbose:
         print("running %s" % (command))
-    return commands.getoutput(command)
+    return commands.getstatusoutput(command)
 
 def check(dirname, options):
     """
@@ -216,7 +216,7 @@ def check(dirname, options):
 
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
-            out = run('cd "%s"; LC_ALL=C git status' % infile, options)
+            status, out = run('cd "%s"; LC_ALL=C git status' % infile, options)
             if options.verbose:
                 sys.stdout.write(out + "\n")
 
@@ -259,7 +259,7 @@ def check(dirname, options):
 
             if can_push and options.push:
                 # Push to the remote
-                push = run(
+                status, push = run(
                     'cd "%s"; LC_ALL=C git push %s'
                         % (infile, ' '.join(options.remote.split(":"))), options
                 )
@@ -272,7 +272,7 @@ def check(dirname, options):
 
             if can_pull and options.pull:
                 # Pull from the remote
-                pull = run(
+                status, pull = run(
                     'cd "%s"; LC_ALL=C git pull %s'
                         % (infile, ' '.join(options.remote.split(":"))), options
                 )
@@ -291,23 +291,21 @@ def check(dirname, options):
                     messages.append(colorize(Colors.OKBLUE, "Pulled"))
 
             if options.command:
-                output = run(
-                    'cd "%s"; LC_ALL=C %s; echo $?'% (infile, options.command),
+                exit_status, output = run(
+                    'cd "%s"; LC_ALL=C %s'% (infile, options.command),
                     options
                 )
-                exit_status = output[-1]  # TODO: fails for exit status more than 2 digits
-                output = output[:-2]
                 if not options.colors:
                     output = colorize_off('', output)
                 if not options.quiet:
                     messages.append('\n' + output)
-                    if not exit_status is '0':
+                    if exit_status != 0:
                         show_error(colorize(Colors.FAIL,
                                             "The command exited with status {s} in {r}".format(s=exit_status, r=infile) +
                                             "\nThe output was:" + output))
 
             if options.cbranch:
-                checkoutbranch = run(
+                status, checkoutbranch = run(
                     'cd "%s"; LC_ALL=C git checkout %s'
                         % (infile, options.cbranch), options
                 )
