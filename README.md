@@ -42,6 +42,13 @@ If there are no changes it can also push and pull to/from a remote location.
 ## Options
 
 ```
+Usage: clustergit [options]
+
+clustergit will scan through all subdirectories looking for a .git directory.
+When it finds one it'll look to see if there are any changes and let you know.
+If there are no changes it can also push and pull to/from a remote location.
+
+Options:
   -h, --help            show this help message and exit
   -d DIRNAME, --dir=DIRNAME
                         The directory to parse sub dirs from
@@ -54,6 +61,8 @@ If there are no changes it can also push and pull to/from a remote location.
                         push to there
   -p, --pull            Do a 'git pull' if you've set a remote with -r it will
                         pull from there
+  --exec=COMMAND, --execute=COMMAND
+                        Execute a shell command in each repository
   -c, --clear           Clear screen on startup
   -C, --count-dirty     Only display a count of not-clean repos
   -q, --quiet           Skip startup info
@@ -69,6 +78,7 @@ If there are no changes it can also push and pull to/from a remote location.
                         Checkout branch
   --warn-unversioned    Prints a warning if a directory is not under git
                         version control
+
 ```
 
 ## Contact

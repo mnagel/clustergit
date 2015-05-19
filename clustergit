@@ -27,9 +27,15 @@ except Exception:
 def colorize(color, message):
     return "%s%s%s" % (color, message, Colors.ENDC)
 def colorize_off(color, message):
+    for color in [Colors.BOLD, Colors.UNDERLINE, Colors.HEADER,
+                  Colors.OKBLUE, Colors.OKGREEN,
+                  Colors.WARNING, Colors.FAIL, Colors.ENDC]:
+        message = message.replace(color, '')
     return message
 
 class Colors:
+    BOLD = '\033[1m'     # unused
+    UNDERLINE = '\033[4m'# unused
     HEADER = '\033[95m'  # unused
     OKBLUE = '\033[94m'  # write operation succeeded
     OKGREEN = '\033[92m' # readonly operation succeeded
@@ -84,6 +90,14 @@ def read_arguments(args):
                 dest        = "pull",
                 default     = False,
                 help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
+                )
+
+    parser.add_argument("--exec", "--execute",
+                action      = "store",
+                dest        = "command",
+                type        = str,
+                default     = "",
+                help        = "Execute a shell command in each repository"
                 )
 
     parser.add_argument("-c", "--clear",
@@ -184,7 +198,7 @@ def is_excluded(path, options):
 def run(command, options):
     if options.verbose:
         print("running %s" % (command))
-    return commands.getoutput(command)
+    return commands.getstatusoutput(command)
 
 def check(dirname, options):
     """
@@ -213,7 +227,7 @@ def check(dirname, options):
 
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
-            out = run('cd "%s"; LC_ALL=C git status' % infile, options)
+            status, out = run('cd "%s"; LC_ALL=C git status' % infile, options)
             if options.verbose:
                 sys.stdout.write(out + "\n")
 
@@ -256,7 +270,7 @@ def check(dirname, options):
 
             if can_push and options.push:
                 # Push to the remote
-                push = run(
+                status, push = run(
                     'cd "%s"; LC_ALL=C git push %s'
                         % (infile, ' '.join(options.remote.split(":"))), options
                 )
@@ -269,7 +283,7 @@ def check(dirname, options):
 
             if can_pull and options.pull:
                 # Pull from the remote
-                pull = run(
+                status, pull = run(
                     'cd "%s"; LC_ALL=C git pull %s'
                         % (infile, ' '.join(options.remote.split(":"))), options
                 )
@@ -287,8 +301,22 @@ def check(dirname, options):
                 else:
                     messages.append(colorize(Colors.OKBLUE, "Pulled"))
 
+            if options.command:
+                exit_status, output = run(
+                    'cd "%s"; LC_ALL=C %s'% (infile, options.command),
+                    options
+                )
+                if not options.colors:
+                    output = colorize_off('', output)
+                if not options.quiet:
+                    messages.append('\n' + output)
+                    if exit_status != 0:
+                        show_error(colorize(Colors.FAIL,
+                                            "The command exited with status {s} in {r}".format(s=exit_status, r=infile) +
+                                            "\nThe output was:" + output))
+
             if options.cbranch:
-                checkoutbranch = run(
+                status, checkoutbranch = run(
                     'cd "%s"; LC_ALL=C git checkout %s'
                         % (infile, options.cbranch), options
                 )
