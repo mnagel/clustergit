@@ -11,7 +11,7 @@ try:
     use_argcomplete = True
 except Exception:
     use_argcomplete = False
-    print('Notice: install "argcomplete" to automatic complete the arguments')
+    # print('Notice: install "argcomplete" to automatic complete the arguments')
 try:
     from argparse import ArgumentParser
 except Exception:
