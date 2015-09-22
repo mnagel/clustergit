@@ -45,7 +45,7 @@ class Colors:
 
 def read_arguments(args):
     parser = ArgumentParser(description="""
-    clustergit will scan through all subdirectories looking for a .git directory.
+    clustergit will scan through all subdirectories looking for git repos.
     When it finds one it'll look to see if there are any changes and let you know.
     If there are no changes it can also push and pull to/from a remote location.
     """.strip())
@@ -200,6 +200,35 @@ def run(command, options):
         print("running %s" % (command))
     return commands.getstatusoutput(command)
 
+def is_git_repo_base(path):
+    """
+    Return whether path is the base directory of a working git repository.
+
+    Return true for git directories that are not inside the working tree, and
+    false for bare repositories.
+    """
+    if not os.path.isdir(path):
+        return False
+    status, out = commands.getstatusoutput('cd "%s"; git rev-parse --git-dir' % path)
+    if status != 0:
+        return False
+
+    git_dir = os.path.realpath(os.path.join(path, out))
+    absolute_path = os.path.realpath(path)
+
+    if git_dir == os.path.join(absolute_path, '.git'):
+        # Base directory of a regular repo
+        return True
+    elif git_dir == absolute_path:
+        # This could be a bare repository or a git directory located outside
+        # of the working tree.
+        status, out = commands.getstatusoutput(
+            'cd "%s"; git rev-parse --is-bare-repository' % path)
+        return out != 'true'
+    else:
+        # This is a repository, but not the base directory
+        return False
+
 def check(dirname, options):
     """
     Check the subdirectories of a single directory.
@@ -215,8 +244,7 @@ def check(dirname, options):
     for infile in files:
         infile = os.path.join(dirname, infile)
 
-        #is there a .git file
-        if os.path.exists( os.path.join(infile, ".git") ):
+        if is_git_repo_base(infile):
 
             if options.verbose:
                 sys.stdout.write("\n")
@@ -225,7 +253,7 @@ def check(dirname, options):
             #Yay, we found one!
             gitted = True
 
-            # OK, contains a .git file. Let's descend into it
+            # OK, it's a repository. Let's descend into it
             # and ask git for a status
             status, out = run('cd "%s"; LC_ALL=C git status' % infile, options)
             if options.verbose:
@@ -375,7 +403,7 @@ def main(args):
                 break
 
         if not gitted:
-            show_error("Error: None of those sub directories had a .git file.\n")
+            show_error("Error: None of those sub directories was a git repository.\n")
 
         if options.count:
             sys.stdout.write(str(dirties) + "\n")

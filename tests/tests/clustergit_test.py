@@ -22,7 +22,7 @@ Scanning sub directories of .
 
 """
         actual_err = mystderr.getvalue()
-        expected_err = """Error: None of those sub directories had a .git file.
+        expected_err = """Error: None of those sub directories was a git repository.
 """
         same("stdout should be alright", expected_out, actual_out)
         same("stderr should be alright", expected_err, actual_err)
