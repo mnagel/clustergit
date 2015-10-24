@@ -204,8 +204,8 @@ def is_git_repo_base(path):
     """
     Return whether path is the base directory of a working git repository.
 
-    Return true for git directories that are not inside the working tree, and
-    false for bare repositories.
+    Return 'worktree' for git directories that are not inside the working tree, and
+    the string 'bare' for bare repositories.
     """
     if not os.path.isdir(path):
         return False
@@ -224,7 +224,10 @@ def is_git_repo_base(path):
         # of the working tree.
         status, out = commands.getstatusoutput(
             'cd "%s"; git rev-parse --is-bare-repository' % path)
-        return out != 'true'
+        if out == 'true':
+            return 'bare'
+        else:
+            return 'worktree'
     else:
         # This is a repository, but not the base directory
         return False
@@ -234,24 +237,29 @@ def check(dirname, options):
     Check the subdirectories of a single directory.
     See if they are versioned in git and display the requested information.
     """
-    gitted = False
+    gitted = []
     dirties = 0
+    bares = []
 
     # See whats here
     files = os.listdir(dirname)
     files[:] = [f for f in files if not is_excluded(os.path.join(dirname, f), options)]
     files.sort()
     for infile in files:
+        possible_git_dir = infile
         infile = os.path.join(dirname, infile)
 
-        if is_git_repo_base(infile):
+        repo_type = is_git_repo_base(infile)
 
+        if repo_type == 'bare':
+            bares.append(possible_git_dir)
+        elif repo_type:
             if options.verbose:
                 sys.stdout.write("\n")
                 sys.stdout.write("---------------- "+ infile +" -----------------\n")
 
             #Yay, we found one!
-            gitted = True
+            gitted.append(possible_git_dir)
 
             # OK, it's a repository. Let's descend into it
             # and ask git for a status
@@ -372,7 +380,7 @@ def check(dirname, options):
             sys.stdout.write(infile.ljust(options.align) + ": ")
             sys.stdout.write(colorize(Colors.WARNING, "Not a GIT repository")+"\n")
             sys.stdout.flush()
-    return gitted, dirties
+    return gitted, dirties, bares
 
 #-------------------
 # Now, onto the main event!
@@ -396,11 +404,13 @@ def main(args):
         dirties = 0
 
         for (path, dirs, files) in os.walk(options.dirname, topdown=True):
-            new_gitted, new_dirties = check(path, options)
+            new_gitted, new_dirties, new_bares = check(path, options)
             gitted = gitted or new_gitted
             dirties += new_dirties
             if not options.recursive:
                 break
+            # dirs has to be edited in place
+            dirs[:] = list(set(dirs) - set(new_gitted) - set(new_bares))
 
         if not gitted:
             show_error("Error: None of those sub directories was a git repository.\n")
