@@ -45,7 +45,7 @@ class Colors:
 
 def read_arguments(args):
     parser = ArgumentParser(description="""
-    clustergit will scan through all subdirectories looking for a .git directory.
+    clustergit will scan through all subdirectories looking for git repos.
     When it finds one it'll look to see if there are any changes and let you know.
     If there are no changes it can also push and pull to/from a remote location.
     """.strip())
@@ -200,32 +200,68 @@ def run(command, options):
         print("running %s" % (command))
     return commands.getstatusoutput(command)
 
+def is_git_repo_base(path):
+    """
+    Return whether path is the base directory of a working git repository.
+
+    Return 'worktree' for git directories that are not inside the working tree, and
+    the string 'bare' for bare repositories.
+    """
+    if not os.path.isdir(path):
+        return False
+    status, out = commands.getstatusoutput('cd "%s"; git rev-parse --git-dir' % path)
+    if status != 0:
+        return False
+
+    git_dir = os.path.realpath(os.path.join(path, out))
+    absolute_path = os.path.realpath(path)
+
+    if git_dir == os.path.join(absolute_path, '.git'):
+        # Base directory of a regular repo
+        return True
+    elif git_dir == absolute_path:
+        # This could be a bare repository or a git directory located outside
+        # of the working tree.
+        status, out = commands.getstatusoutput(
+            'cd "%s"; git rev-parse --is-bare-repository' % path)
+        if out == 'true':
+            return 'bare'
+        else:
+            return 'worktree'
+    else:
+        # This is a repository, but not the base directory
+        return False
+
 def check(dirname, options):
     """
     Check the subdirectories of a single directory.
     See if they are versioned in git and display the requested information.
     """
-    gitted = False
+    gitted = []
     dirties = 0
+    bares = []
 
     # See whats here
     files = os.listdir(dirname)
     files[:] = [f for f in files if not is_excluded(os.path.join(dirname, f), options)]
     files.sort()
     for infile in files:
+        possible_git_dir = infile
         infile = os.path.join(dirname, infile)
 
-        #is there a .git file
-        if os.path.exists( os.path.join(infile, ".git") ):
+        repo_type = is_git_repo_base(infile)
 
+        if repo_type == 'bare':
+            bares.append(possible_git_dir)
+        elif repo_type:
             if options.verbose:
                 sys.stdout.write("\n")
                 sys.stdout.write("---------------- "+ infile +" -----------------\n")
 
             #Yay, we found one!
-            gitted = True
+            gitted.append(possible_git_dir)
 
-            # OK, contains a .git file. Let's descend into it
+            # OK, it's a repository. Let's descend into it
             # and ask git for a status
             status, out = run('cd "%s"; LC_ALL=C git status' % infile, options)
             if options.verbose:
@@ -344,7 +380,7 @@ def check(dirname, options):
             sys.stdout.write(infile.ljust(options.align) + ": ")
             sys.stdout.write(colorize(Colors.WARNING, "Not a GIT repository")+"\n")
             sys.stdout.flush()
-    return gitted, dirties
+    return gitted, dirties, bares
 
 #-------------------
 # Now, onto the main event!
@@ -368,14 +404,16 @@ def main(args):
         dirties = 0
 
         for (path, dirs, files) in os.walk(options.dirname, topdown=True):
-            new_gitted, new_dirties = check(path, options)
+            new_gitted, new_dirties, new_bares = check(path, options)
             gitted = gitted or new_gitted
             dirties += new_dirties
             if not options.recursive:
                 break
+            # dirs has to be edited in place
+            dirs[:] = list(set(dirs) - set(new_gitted) - set(new_bares))
 
         if not gitted:
-            show_error("Error: None of those sub directories had a .git file.\n")
+            show_error("Error: None of those sub directories was a git repository.\n")
 
         if options.count:
             sys.stdout.write(str(dirties) + "\n")
