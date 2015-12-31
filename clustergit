@@ -6,6 +6,7 @@ from __future__ import print_function
 import re
 import sys
 import os
+
 try:
     from argcomplete import autocomplete
     use_argcomplete = True
@@ -24,8 +25,12 @@ except Exception:
     import subprocess as commands
     commands.get_output = commands.check_output
 
+
 def colorize(color, message):
     return "%s%s%s" % (color, message, Colors.ENDC)
+
+
+# noinspection PyUnusedLocal
 def colorize_off(color, message):
     for color in [Colors.BOLD, Colors.UNDERLINE, Colors.HEADER,
                   Colors.OKBLUE, Colors.OKGREEN,
@@ -33,15 +38,18 @@ def colorize_off(color, message):
         message = message.replace(color, '')
     return message
 
+
+# noinspection PyClassHasNoInit
 class Colors:
-    BOLD = '\033[1m'     # unused
-    UNDERLINE = '\033[4m'# unused
-    HEADER = '\033[95m'  # unused
-    OKBLUE = '\033[94m'  # write operation succeeded
-    OKGREEN = '\033[92m' # readonly operation succeeded
-    WARNING = '\033[93m' # operation succeeded with non-default result
-    FAIL = '\033[91m'    # operation did not succeed
-    ENDC = '\033[0m'     # reset color
+    BOLD = '\033[1m'       # unused
+    UNDERLINE = '\033[4m'  # unused
+    HEADER = '\033[95m'    # unused
+    OKBLUE = '\033[94m'    # write operation succeeded
+    OKGREEN = '\033[92m'   # readonly operation succeeded
+    WARNING = '\033[93m'   # operation succeeded with non-default result
+    FAIL = '\033[91m'      # operation did not succeed
+    ENDC = '\033[0m'       # reset color
+
 
 def read_arguments(args):
     parser = ArgumentParser(description="""
@@ -182,23 +190,27 @@ def read_arguments(args):
     options = parser.parse_args(args)
     return options
 
+
 def show_error(error="Undefined Error!"):
     """Writes an error to stderr"""
     sys.stderr.write(error)
     sys.exit(1)
 
+
 def is_excluded(path, options):
     for ex in options.exclude:
         if re.search(ex, path):
             if options.verbose:
-                print("skipping %s" % (path))
+                print("skipping %s" % path)
             return True
     return False
 
+
 def run(command, options):
     if options.verbose:
-        print("running %s" % (command))
+        print("running %s" % command)
     return commands.getstatusoutput(command)
+
 
 def check(dirname, options):
     """
@@ -215,14 +227,14 @@ def check(dirname, options):
     for infile in files:
         infile = os.path.join(dirname, infile)
 
-        #is there a .git file
-        if os.path.exists( os.path.join(infile, ".git") ):
+        # is there a .git file
+        if os.path.exists(os.path.join(infile, ".git")):
 
             if options.verbose:
                 sys.stdout.write("\n")
-                sys.stdout.write("---------------- "+ infile +" -----------------\n")
+                sys.stdout.write("---------------- " + infile + " -----------------\n")
 
-            #Yay, we found one!
+            # Yay, we found one!
             gitted = True
 
             # OK, contains a .git file. Let's descend into it
@@ -238,7 +250,7 @@ def check(dirname, options):
             can_push = False
             can_pull = True
             if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
-                branch = out.splitlines()[0].replace("On branch ","")
+                branch = out.splitlines()[0].replace("On branch ", "")
                 messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
                 can_pull = False
                 clean = False
@@ -272,7 +284,7 @@ def check(dirname, options):
                 # Push to the remote
                 status, push = run(
                     'cd "%s"; LC_ALL=C git push %s'
-                        % (infile, ' '.join(options.remote.split(":"))), options
+                    % (infile, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
                     sys.stdout.write(push + "\n")
@@ -285,7 +297,7 @@ def check(dirname, options):
                 # Pull from the remote
                 status, pull = run(
                     'cd "%s"; LC_ALL=C git pull %s'
-                        % (infile, ' '.join(options.remote.split(":"))), options
+                    % (infile, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
                     sys.stdout.write(pull + "\n")
@@ -303,7 +315,7 @@ def check(dirname, options):
 
             if options.command:
                 exit_status, output = run(
-                    'cd "%s"; LC_ALL=C %s'% (infile, options.command),
+                    'cd "%s"; LC_ALL=C %s' % (infile, options.command),
                     options
                 )
                 if not options.colors:
@@ -311,17 +323,15 @@ def check(dirname, options):
                 if not options.quiet:
                     messages.append('\n' + output)
                     if exit_status != 0:
-                        show_error(colorize(Colors.FAIL,
-                                            "The command exited with status {s} in {r}".format(s=exit_status, r=infile) +
-                                            "\nThe output was:" + output))
+                        msg = "The command exited with status {s} in {r}\nThe output was:{o}"
+                        msg = msg.format(s=exit_status, r=infile, o=output)
+                        show_error(colorize(Colors.FAIL, msg))
 
             if options.cbranch:
                 status, checkoutbranch = run(
                     'cd "%s"; LC_ALL=C git checkout %s'
-                        % (infile, options.cbranch), options
+                    % (infile, options.cbranch), options
                 )
-                if options.verbose:
-                    sys.stdout.write(pull + "\n")
                 if "Already on" in checkoutbranch:
                     if not options.hide_clean:
                         messages.append(colorize(Colors.OKGREEN, "No action"))
@@ -339,17 +349,17 @@ def check(dirname, options):
             run('cd ../', options)
 
             if options.verbose:
-                sys.stdout.write("---------------- "+ infile +" -----------------\n")
+                sys.stdout.write("---------------- " + infile + " -----------------\n")
         elif options.unversioned and not infile.startswith("./.") and os.path.isdir(infile):
             sys.stdout.write(infile.ljust(options.align) + ": ")
-            sys.stdout.write(colorize(Colors.WARNING, "Not a GIT repository")+"\n")
+            sys.stdout.write(colorize(Colors.WARNING, "Not a GIT repository") + "\n")
             sys.stdout.flush()
     return gitted, dirties
 
-#-------------------
-# Now, onto the main event!
-#-------------------
 
+# -------------------
+# Now, onto the main event!
+# -------------------
 def main(args):
     try:
         options = read_arguments(args)
@@ -358,9 +368,10 @@ def main(args):
 
         if not options.quiet:
             sys.stdout.write('Starting git status...\n')
-            sys.stdout.write('Scanning sub directories of %s\n' %options.dirname)
+            sys.stdout.write('Scanning sub directories of %s\n' % options.dirname)
 
         if not options.colors:
+            # noinspection PyGlobalUndefined
             global colorize
             colorize = colorize_off
 
