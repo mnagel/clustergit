@@ -6,6 +6,8 @@ from __future__ import print_function
 import re
 import sys
 import os
+if os.name == 'nt':
+    from ctypes import windll, c_ulong
 
 try:
     from argcomplete import autocomplete
@@ -32,9 +34,7 @@ def colorize(color, message):
 
 # noinspection PyUnusedLocal
 def colorize_off(color, message):
-    for color in [Colors.BOLD, Colors.UNDERLINE, Colors.HEADER,
-                  Colors.OKBLUE, Colors.OKGREEN,
-                  Colors.WARNING, Colors.FAIL, Colors.ENDC]:
+    for color in Colors.ALL:
         message = message.replace(color, '')
     return message
 
@@ -49,6 +49,45 @@ class Colors:
     WARNING = '\033[93m'   # operation succeeded with non-default result
     FAIL = '\033[91m'      # operation did not succeed
     ENDC = '\033[0m'       # reset color
+    
+    # list of all colors
+    ALL = [BOLD, UNDERLINE, HEADER, OKBLUE, OKGREEN, WARNING, FAIL, ENDC]
+    
+    # map from ASCII to Windows color text attribute
+    WIN_DICT = {
+        BOLD: 15,
+        UNDERLINE: 15,
+        HEADER: 15,
+        OKBLUE: 11,
+        OKGREEN: 10,
+        WARNING: 14,
+        FAIL: 12,
+        ENDC: 15
+    }
+
+
+def write_color(out, str):
+    # set text attribute for Windows and write ASCII color otherwise
+    if os.name == 'nt':
+        windll.Kernel32.SetConsoleTextAttribute(
+            windll.Kernel32.GetStdHandle(c_ulong(0xfffffff5)),
+            Colors.WIN_DICT[str]
+        )
+    else:
+        out.write(str)
+
+
+def write_with_color(out, str):
+    # build regex for splitting by colors, split and iterate over elements
+    for p in re.split(('(%s)' % '|'.join(Colors.ALL)).replace('[', '\['), str):
+        # check if element is a color
+        if p in Colors.ALL:
+            write_color(out, p)
+        else:
+            # plain text
+            out.write(p)
+            # flush required to properly apply color
+            out.flush()
 
 
 def read_arguments(args):
@@ -146,7 +185,7 @@ def read_arguments(args):
     parser.add_argument("-n", "--no-colors",
                 action      = "store_false",
                 dest        = "colors",
-                default     = os.name != 'nt',
+                default     = True,
                 help        = "Disable ANSI color output"
                 )
 
@@ -193,7 +232,7 @@ def read_arguments(args):
 
 def show_error(error="Undefined Error!"):
     """Writes an error to stderr"""
-    sys.stderr.write(error)
+    write_with_color(sys.stderr, error)
     sys.exit(1)
 
 
@@ -345,7 +384,7 @@ def check(dirname, options):
 
             if not options.count and messages:
                 sys.stdout.write(infile.ljust(options.align) + ": ")
-                sys.stdout.write(", ".join(messages) + "\n")
+                write_with_color(sys.stdout, ", ".join(messages) + "\n")
                 sys.stdout.flush()
 
             # Come out of the dir and into the next
@@ -355,7 +394,7 @@ def check(dirname, options):
                 sys.stdout.write("---------------- " + infile + " -----------------\n")
         elif options.unversioned and not infile.startswith("./.") and os.path.isdir(infile):
             sys.stdout.write(infile.ljust(options.align) + ": ")
-            sys.stdout.write(colorize(Colors.WARNING, "Not a GIT repository") + "\n")
+            write_with_color(sys.stdout, colorize(Colors.WARNING, "Not a GIT repository") + "\n")
             sys.stdout.flush()
     return gitted, dirties
 
