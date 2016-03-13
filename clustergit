@@ -229,6 +229,9 @@ def check(dirname, options):
 
         # is there a .git file
         if os.path.exists(os.path.join(infile, ".git")):
+            cmdprefix = 'cd "%s" &&' % infile
+            if os.name != 'nt':
+                cmdprefix = cmdprefix + ' LC_ALL=C'
 
             if options.verbose:
                 sys.stdout.write("\n")
@@ -239,7 +242,7 @@ def check(dirname, options):
 
             # OK, contains a .git file. Let's descend into it
             # and ask git for a status
-            status, out = run('cd "%s"; LC_ALL=C git status' % infile, options)
+            status, out = run('%s git status' % cmdprefix, options)
             if options.verbose:
                 sys.stdout.write(out + "\n")
 
@@ -283,8 +286,8 @@ def check(dirname, options):
             if can_push and options.push:
                 # Push to the remote
                 status, push = run(
-                    'cd "%s"; LC_ALL=C git push %s'
-                    % (infile, ' '.join(options.remote.split(":"))), options
+                    '%s git push %s'
+                    % (cmdprefix, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
                     sys.stdout.write(push + "\n")
@@ -296,8 +299,8 @@ def check(dirname, options):
             if can_pull and options.pull:
                 # Pull from the remote
                 status, pull = run(
-                    'cd "%s"; LC_ALL=C git pull %s'
-                    % (infile, ' '.join(options.remote.split(":"))), options
+                    '%s git pull %s'
+                    % (cmdprefix, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
                     sys.stdout.write(pull + "\n")
@@ -315,7 +318,7 @@ def check(dirname, options):
 
             if options.command:
                 exit_status, output = run(
-                    'cd "%s"; LC_ALL=C %s' % (infile, options.command),
+                    '%s %s' % (cmdprefix, options.command),
                     options
                 )
                 if not options.colors:
@@ -329,8 +332,8 @@ def check(dirname, options):
 
             if options.cbranch:
                 status, checkoutbranch = run(
-                    'cd "%s"; LC_ALL=C git checkout %s'
-                    % (infile, options.cbranch), options
+                    '%s git checkout %s'
+                    % (cmdprefix, options.cbranch), options
                 )
                 if "Already on" in checkoutbranch:
                     if not options.hide_clean:
