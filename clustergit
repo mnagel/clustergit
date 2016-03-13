@@ -146,7 +146,7 @@ def read_arguments(args):
     parser.add_argument("-n", "--no-colors",
                 action      = "store_false",
                 dest        = "colors",
-                default     = True,
+                default     = os.name != 'nt',
                 help        = "Disable ANSI color output"
                 )
 
