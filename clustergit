@@ -17,9 +17,11 @@ except Exception:
     # print('Notice: install "argcomplete" to automatic complete the arguments')
 try:
     from argparse import ArgumentParser
+    import argparse
 except Exception:
     # python3
     from ArgParse import ArgumentParser
+    import ArgParse
 try:
     import commands
 except Exception:
@@ -95,7 +97,9 @@ def read_arguments(args):
     clustergit will scan through all subdirectories looking for a .git directory.
     When it finds one it'll look to see if there are any changes and let you know.
     If there are no changes it can also push and pull to/from a remote location.
-    """.strip())
+    """.strip(),
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     parser.add_argument("-d", "--dir",
                     dest    = "dirname",
                     action  = "store",
