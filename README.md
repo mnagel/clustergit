@@ -42,43 +42,48 @@ If there are no changes it can also push and pull to/from a remote location.
 ## Options
 
 ```
-Usage: clustergit [options]
+usage: clustergit [-h] [-d DIRNAME] [-v] [-a ALIGN] [-r REMOTE] [--push] [-p]
+                  [--exec COMMAND] [-c] [-C] [-q] [-H] [-R] [-n] [-b BRANCH]
+                  [--recursive] [-e EXCLUDE] [-B CBRANCH] [--warn-unversioned]
 
 clustergit will scan through all subdirectories looking for a .git directory.
 When it finds one it'll look to see if there are any changes and let you know.
 If there are no changes it can also push and pull to/from a remote location.
 
-Options:
+optional arguments:
   -h, --help            show this help message and exit
-  -d DIRNAME, --dir=DIRNAME
-                        The directory to parse sub dirs from
-  -v, --verbose         Show the full detail of git status
-  -a ALIGN, --align=ALIGN
-                        Repo name align (space padding)
-  -r REMOTE, --remote=REMOTE
-                        Set the remote name (remotename:branchname)
+  -d DIRNAME, --dir DIRNAME
+                        The directory to parse sub dirs from (default: .)
+  -v, --verbose         Show the full detail of git status (default: False)
+  -a ALIGN, --align ALIGN
+                        Repo name align (space padding) (default: 40)
+  -r REMOTE, --remote REMOTE
+                        Set the remote name (remotename:branchname) (default:
+                        )
   --push                Do a 'git push' if you've set a remote with -r it will
-                        push to there
+                        push to there (default: False)
   -p, --pull            Do a 'git pull' if you've set a remote with -r it will
-                        pull from there
-  --exec=COMMAND, --execute=COMMAND
-                        Execute a shell command in each repository
-  -c, --clear           Clear screen on startup
-  -C, --count-dirty     Only display a count of not-clean repos
-  -q, --quiet           Skip startup info
-  -H, --hide-clean      Hide clean repos
-  -R, --relative        Print relative paths
-  -n, --no-colors       Disable ANSI color output
-  -b BRANCH, --branch=BRANCH
-                        Warn if not on this branch
-  --recursive           Recursively search for git repos
-  -e EXCLUDE, --exclude=EXCLUDE
-                        Regex to exclude directories
-  -B CBRANCH, --checkout-branch=CBRANCH
-                        Checkout branch
+                        pull from there (default: False)
+  --exec COMMAND, --execute COMMAND
+                        Execute a shell command in each repository (default: )
+  -c, --clear           Clear screen on startup (default: False)
+  -C, --count-dirty     Only display a count of not-clean repos (default:
+                        False)
+  -q, --quiet           Skip startup info (default: False)
+  -H, --hide-clean      Hide clean repos (default: False)
+  -R, --relative        Print relative paths (default: False)
+  -n, --no-colors       Disable ANSI color output. Disregard the alleged
+                        default -- color is on by default. (default: True)
+  -b BRANCH, --branch BRANCH
+                        Warn if not on this branch. Set to empty string (-b
+                        '') to disable this feature. (default: master)
+  --recursive           Recursively search for git repos (default: False)
+  -e EXCLUDE, --exclude EXCLUDE
+                        Regex to exclude directories (default: [])
+  -B CBRANCH, --checkout-branch CBRANCH
+                        Checkout branch (default: None)
   --warn-unversioned    Prints a warning if a directory is not under git
-                        version control
-
+                        version control (default: False)
 ```
 
 ## Contact
