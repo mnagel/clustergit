@@ -94,13 +94,13 @@ via https://github.com/mnagel/clustergit
 
 Files:
 
-* clustergit, README.*
+* all files
 
 Copyright:
 
 * 2010 Mike Pearce mike@mikepearce.net
 * 2010 catchamonkey chris@sedlmayr.co.uk
-* 2011-2014 Michael Nagel ubuntu@nailor.devzero.de
+* 2011-2016 Michael Nagel ubuntu@nailor.devzero.de
 * 2015 sedrubal sebastian.endres@online.de
 
 License:
