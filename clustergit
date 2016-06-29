@@ -190,14 +190,14 @@ def read_arguments(args):
                 action      = "store_false",
                 dest        = "colors",
                 default     = True,
-                help        = "Disable ANSI color output"
+                help        = "Disable ANSI color output. Disregard the alleged default -- color is on by default."
                 )
 
     parser.add_argument("-b", "--branch",
                 action      = "store",
                 dest        = "branch",
                 default     = "master",
-                help        = "Warn if not on this branch"
+                help        = "Warn if not on this branch. Set to empty string (-b '') to disable this feature."
                 )
 
     parser.add_argument("--recursive",
@@ -217,7 +217,7 @@ def read_arguments(args):
     parser.add_argument("-B", "--checkout-branch",
                 action      = "store",
                 dest        = "cbranch",
-                default     = [],
+                default     = None,
                 help        = "Checkout branch"
                 )
 
