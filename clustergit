@@ -300,7 +300,9 @@ def check(dirname, options):
                 messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
                 can_pull = False
                 clean = False
-            if re.search(r'nothing to commit.?.?working directory clean.?', out):
+            # changed from "directory" to "tree" in git 2.9.1
+            # https://github.com/mnagel/clustergit/issues/18
+            if re.search(r'nothing to commit.?.?working (directory|tree) clean.?', out):
                 messages.append(colorize(Colors.OKBLUE, "No Changes"))
                 can_push = True
             elif 'nothing added to commit but untracked files present' in out:
