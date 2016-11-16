@@ -64,6 +64,7 @@ optional arguments:
                         push to there (default: False)
   -p, --pull            Do a 'git pull' if you've set a remote with -r it will
                         pull from there (default: False)
+  -f, --fetch           Do a 'git fetch' on each repository
   --exec COMMAND, --execute COMMAND
                         Execute a shell command in each repository (default: )
   -c, --clear           Clear screen on startup (default: False)
