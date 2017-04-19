@@ -207,6 +207,13 @@ def read_arguments(args):
                 help        = "Recursively search for git repos"
                 )
 
+    parser.add_argument("--skip-symlinks",
+                action    = "store_true",
+                dest      = "skipSymLinks",
+                default   = False,
+                help      = "Skip symbolic links when searching for git repos"
+                )
+
     parser.add_argument("-e", "--exclude",
                 action      = "append",
                 dest        = "exclude",
@@ -272,6 +279,11 @@ def check(dirname, options):
 
         # is there a .git file
         if os.path.exists(os.path.join(infile, ".git")):
+            if options.skipSymLinks and os.path.islink(infile):
+                if options.verbose:
+                    print("skipping %s symbolic link" % infile)
+                continue
+
             cmdprefix = 'cd "%s" &&' % infile
             if os.name != 'nt':
                 cmdprefix = cmdprefix + ' LC_ALL=C'
