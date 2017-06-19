@@ -6,6 +6,8 @@ from __future__ import print_function
 import re
 import sys
 import os
+import subprocess
+
 if os.name == 'nt':
     from ctypes import windll, c_ulong
 
@@ -22,12 +24,6 @@ except Exception:
     # python3
     from ArgParse import ArgumentParser
     import ArgParse
-try:
-    import commands
-except Exception:
-    # python3
-    import subprocess as commands
-    commands.get_output = commands.check_output
 
 
 def colorize(color, message):
@@ -259,7 +255,11 @@ def is_excluded(path, options):
 def run(command, options):
     if options.verbose:
         print("running %s" % command)
-    return commands.getstatusoutput(command)
+    try:
+        output = subprocess.check_output(command, shell=True)
+        return 0, output
+    except subprocess.CalledProcessError, e:
+        return e.returncode, e.output
 
 
 def check(dirname, options):
