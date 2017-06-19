@@ -48,7 +48,7 @@ class Colors:
     HEADER = '\033[95m'    # unused
     OKBLUE = '\033[94m'    # write operation succeeded
     OKGREEN = '\033[92m'   # readonly operation succeeded
-    OKPURPLE = '\033[35m'  # readonly (fetch) operation succeeded
+    OKPURPLE = '\033[95m'  # readonly (fetch) operation succeeded
     WARNING = '\033[93m'   # operation succeeded with non-default result
     FAIL = '\033[91m'      # operation did not succeed
     ENDC = '\033[0m'       # reset color
