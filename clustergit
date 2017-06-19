@@ -14,13 +14,13 @@ if os.name == 'nt':
 try:
     from argcomplete import autocomplete
     use_argcomplete = True
-except Exception:
+except ImportError:
     use_argcomplete = False
     # print('Notice: install "argcomplete" to automatic complete the arguments')
 try:
     from argparse import ArgumentParser
     import argparse
-except Exception:
+except ImportError:
     # python3
     from ArgParse import ArgumentParser
     import ArgParse
@@ -64,20 +64,20 @@ class Colors:
     }
 
 
-def write_color(out, str):
+def write_color(out, colour):
     # set text attribute for Windows and write ASCII color otherwise
     if os.name == 'nt' and out.isatty():
         windll.Kernel32.SetConsoleTextAttribute(
             windll.Kernel32.GetStdHandle(c_ulong(0xfffffff5)),
-            Colors.WIN_DICT[str]
+            Colors.WIN_DICT[colour]
         )
     else:
-        out.write(str)
+        out.write(colour)
 
 
-def write_with_color(out, str):
+def write_with_color(out, msg):
     # build regex for splitting by colors, split and iterate over elements
-    for p in re.split(('(%s)' % '|'.join(Colors.ALL)).replace('[', '\['), str):
+    for p in re.split(('(%s)' % '|'.join(Colors.ALL)).replace('[', '\['), msg):
         # check if element is a color
         if p in Colors.ALL:
             write_color(out, p)
