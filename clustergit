@@ -64,15 +64,15 @@ class Colors:
     }
 
 
-def write_color(out, colour):
+def write_color(out, color):
     # set text attribute for Windows and write ASCII color otherwise
     if os.name == 'nt' and out.isatty():
         windll.Kernel32.SetConsoleTextAttribute(
             windll.Kernel32.GetStdHandle(c_ulong(0xfffffff5)),
-            Colors.WIN_DICT[colour]
+            Colors.WIN_DICT[color]
         )
     else:
-        out.write(colour)
+        out.write(color)
 
 
 def write_with_color(out, msg):
