@@ -44,12 +44,13 @@ class Colors:
     HEADER = '\033[95m'    # unused
     OKBLUE = '\033[94m'    # write operation succeeded
     OKGREEN = '\033[92m'   # readonly operation succeeded
+    OKPURPLE = '\033[95m'  # readonly (fetch) operation succeeded
     WARNING = '\033[93m'   # operation succeeded with non-default result
     FAIL = '\033[91m'      # operation did not succeed
     ENDC = '\033[0m'       # reset color
     
     # list of all colors
-    ALL = [BOLD, UNDERLINE, HEADER, OKBLUE, OKGREEN, WARNING, FAIL, ENDC]
+    ALL = [BOLD, UNDERLINE, HEADER, OKBLUE, OKGREEN, OKPURPLE, WARNING, FAIL, ENDC]
     
     # map from ASCII to Windows color text attribute
     WIN_DICT = {
@@ -137,6 +138,13 @@ def read_arguments(args):
                 dest        = "pull",
                 default     = False,
                 help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
+                )
+
+    parser.add_argument("-f", "--fetch",
+                action      = "store_true",
+                dest        = "fetch",
+                default     = False,
+                help        = "Do a 'git fetch' if you've set a remote with -r it will fetch from there"
                 )
 
     parser.add_argument("--exec", "--execute",
@@ -381,6 +389,22 @@ def check(dirname, options):
                     messages.append(colorize(Colors.FAIL, "Pull fatal"))
                 else:
                     messages.append(colorize(Colors.OKBLUE, "Pulled"))
+
+            if options.fetch:
+                # fetch from the remote
+                # deal with [deleted] [new branch] and sha
+                status, fetch = run(
+                    '%s git fetch --all --prune %s'
+                    % (cmdprefix, ' '.join(options.remote.split(":"))), options
+                )
+                if options.verbose:
+                    sys.stdout.write(fetch + "\n")
+                if "error: " in fetch:
+                    messages.append(colorize(Colors.FAIL, "Fetch fatal"))
+                else:
+                    messages.append(colorize(Colors.OKPURPLE, "Fetched"))
+                if status != 0:
+                    messages.append(colorize(Colors.FAIL, "Fetch unsuccessful"))
 
             if options.command:
                 exit_status, output = run(
