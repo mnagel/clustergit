@@ -277,6 +277,15 @@ def check(dirname, options):
     for infile in files:
         infile = os.path.join(dirname, infile)
 
+        # is there a .clustergit-ignore file
+        if os.path.exists(os.path.join(infile, ".clustergit-ignore")) :
+
+            if options.verbose:
+                print("skipping %s directory" % infile)
+
+            # Ignore this folder and continue scanning
+            continue
+
         # is there a .git file
         if os.path.exists(os.path.join(infile, ".git")):
             if options.skipSymLinks and os.path.islink(infile):
