@@ -6,28 +6,24 @@ from __future__ import print_function
 import re
 import sys
 import os
+import subprocess
+
 if os.name == 'nt':
     from ctypes import windll, c_ulong
 
 try:
     from argcomplete import autocomplete
     use_argcomplete = True
-except Exception:
+except ImportError:
     use_argcomplete = False
     # print('Notice: install "argcomplete" to automatic complete the arguments')
 try:
     from argparse import ArgumentParser
     import argparse
-except Exception:
+except ImportError:
     # python3
     from ArgParse import ArgumentParser
     import ArgParse
-try:
-    import commands
-except Exception:
-    # python3
-    import subprocess as commands
-    commands.get_output = commands.check_output
 
 
 def colorize(color, message):
@@ -68,20 +64,20 @@ class Colors:
     }
 
 
-def write_color(out, str):
+def write_color(out, color):
     # set text attribute for Windows and write ASCII color otherwise
-    if os.name == 'nt':
+    if os.name == 'nt' and out.isatty():
         windll.Kernel32.SetConsoleTextAttribute(
             windll.Kernel32.GetStdHandle(c_ulong(0xfffffff5)),
-            Colors.WIN_DICT[str]
+            Colors.WIN_DICT[color]
         )
     else:
-        out.write(str)
+        out.write(color)
 
 
-def write_with_color(out, str):
+def write_with_color(out, msg):
     # build regex for splitting by colors, split and iterate over elements
-    for p in re.split(('(%s)' % '|'.join(Colors.ALL)).replace('[', '\['), str):
+    for p in re.split(('(%s)' % '|'.join(Colors.ALL)).replace('[', '\['), msg):
         # check if element is a color
         if p in Colors.ALL:
             write_color(out, p)
@@ -259,7 +255,11 @@ def is_excluded(path, options):
 def run(command, options):
     if options.verbose:
         print("running %s" % command)
-    return commands.getstatusoutput(command)
+    try:
+        output = subprocess.check_output(command, shell=True)
+        return 0, output
+    except subprocess.CalledProcessError, e:
+        return e.returncode, e.output
 
 
 def check(dirname, options):
