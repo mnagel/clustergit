@@ -139,6 +139,13 @@ def read_arguments(args):
                 default     = False,
                 help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
                 )
+    
+    parser.add_argument("-f", "--fetch",
+                action      = "store_true",
+                dest        = "fetch",
+                default     = False,
+                help        = "Fetch each repository"
+                )
 
     parser.add_argument("-f", "--fetch",
                 action      = "store_true",
@@ -389,6 +396,19 @@ def check(dirname, options):
                     messages.append(colorize(Colors.FAIL, "Pull fatal"))
                 else:
                     messages.append(colorize(Colors.OKBLUE, "Pulled"))
+            
+            if options.fetch:
+                # Fetch'em all
+                status, fetch = run(
+                    '%s git fetch %s'
+                    % (cmdprefix, ' '.join(options.remote.split(":"))), options
+                )
+                if not options.quiet:
+                    messages.append('\n' + fetch)
+                    if status != 0:
+                        msg = "The command exited with status {s} in {r}\nThe output was:{o}"
+                        msg = msg.format(s=status, r=infile, o=fetch)
+                        show_error(colorize(Colors.FAIL, msg))
 
             if options.fetch:
                 # fetch from the remote
