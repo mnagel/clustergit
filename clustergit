@@ -327,7 +327,7 @@ def check(dirname, options):
             if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
                 branch = out.splitlines()[0].replace("On branch ", "")
                 messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
-                can_pull = False
+                can_pull = True
                 clean = False
             # changed from "directory" to "tree" in git 2.9.1
             # https://github.com/mnagel/clustergit/issues/18
