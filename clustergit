@@ -266,7 +266,7 @@ def run(command, options):
     try:
         output = subprocess.check_output(command, shell=True)
         return 0, output
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError as e:
         return e.returncode, e.output
 
 
