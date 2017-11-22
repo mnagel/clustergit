@@ -3,27 +3,24 @@
 """ run git commands on multiple git clones https://github.com/mnagel/clustergit """
 
 from __future__ import print_function
-import re
-import sys
+
+import argparse
 import os
+import re
 import subprocess
+import sys
+from argparse import ArgumentParser
 
 if os.name == 'nt':
     from ctypes import windll, c_ulong
 
 try:
     from argcomplete import autocomplete
-    use_argcomplete = True
 except ImportError:
-    use_argcomplete = False
-    # print('Notice: install "argcomplete" to automatic complete the arguments')
-try:
-    from argparse import ArgumentParser
-    import argparse
-except ImportError:
-    # python3
-    from ArgParse import ArgumentParser
-    import ArgParse
+    # noinspection PyUnusedLocal
+    def autocomplete(args):
+        pass
+        # print('Notice: install "argcomplete" to automatic complete the arguments')
 
 
 def colorize(color, message):
@@ -39,19 +36,19 @@ def colorize_off(color, message):
 
 # noinspection PyClassHasNoInit
 class Colors:
-    BOLD = '\033[1m'       # unused
+    BOLD = '\033[1m'  # unused
     UNDERLINE = '\033[4m'  # unused
-    HEADER = '\033[95m'    # unused
-    OKBLUE = '\033[94m'    # write operation succeeded
-    OKGREEN = '\033[92m'   # readonly operation succeeded
+    HEADER = '\033[95m'  # unused
+    OKBLUE = '\033[94m'  # write operation succeeded
+    OKGREEN = '\033[92m'  # readonly operation succeeded
     OKPURPLE = '\033[95m'  # readonly (fetch) operation succeeded
-    WARNING = '\033[93m'   # operation succeeded with non-default result
-    FAIL = '\033[91m'      # operation did not succeed
-    ENDC = '\033[0m'       # reset color
-    
+    WARNING = '\033[93m'  # operation succeeded with non-default result
+    FAIL = '\033[91m'  # operation did not succeed
+    ENDC = '\033[0m'  # reset color
+
     # list of all colors
     ALL = [BOLD, UNDERLINE, HEADER, OKBLUE, OKGREEN, OKPURPLE, WARNING, FAIL, ENDC]
-    
+
     # map from ASCII to Windows color text attribute
     WIN_DICT = {
         BOLD: 15,
@@ -90,157 +87,177 @@ def write_with_color(out, msg):
 
 
 def read_arguments(args):
-    parser = ArgumentParser(description="""
-    clustergit will scan through all subdirectories looking for a .git directory.
-    When it finds one it'll look to see if there are any changes and let you know.
-    If there are no changes it can also push and pull to/from a remote location.
-    """.strip(),
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    parser = ArgumentParser(
+        description="""
+        clustergit will scan through all subdirectories looking for a .git directory.
+        When it finds one it'll look to see if there are any changes and let you know.
+        If there are no changes it can also push and pull to/from a remote location.
+        """.strip(),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("-d", "--dir",
-                    dest    = "dirname",
-                    action  = "store",
-                    help    = "The directory to parse sub dirs from",
-                    default = "."
-                    )
+    parser.add_argument(
+        "-d", "--dir",
+        dest="dirname",
+        action="store",
+        help="The directory to parse sub dirs from",
+        default="."
+    )
 
-    parser.add_argument("-v", "--verbose",
-                  action    = "store_true",
-                  dest      = "verbose",
-                  default   = False,
-                  help      = "Show the full detail of git status"
-                  )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        dest="verbose",
+        default=False,
+        help="Show the full detail of git status"
+    )
 
-    parser.add_argument("-a", "--align",
-                  action    = "store",
-                  dest      = "align",
-                  default   = 40,
-                  type      = int,
-                  help      = "Repo name align (space padding)"
-                  )
+    parser.add_argument(
+        "-a", "--align",
+        action="store",
+        dest="align",
+        default=40,
+        type=int,
+        help="Repo name align (space padding)"
+    )
 
-    parser.add_argument("-r", "--remote",
-                action      = "store",
-                dest        = "remote",
-                default     = "",
-                help        = "Set the remote name (remotename:branchname)"
-                )
+    parser.add_argument(
+        "-r", "--remote",
+        action="store",
+        dest="remote",
+        default="",
+        help="Set the remote name (remotename:branchname)"
+    )
 
-    parser.add_argument("--push",
-                action      = "store_true",
-                dest        = "push",
-                default     = False,
-                help        = "Do a 'git push' if you've set a remote with -r it will push to there"
-                )
+    parser.add_argument(
+        "--push",
+        action="store_true",
+        dest="push",
+        default=False,
+        help="Do a 'git push' if you've set a remote with -r it will push to there"
+    )
 
-    parser.add_argument("-p", "--pull",
-                action      = "store_true",
-                dest        = "pull",
-                default     = False,
-                help        = "Do a 'git pull' if you've set a remote with -r it will pull from there"
-                )
+    parser.add_argument(
+        "-p", "--pull",
+        action="store_true",
+        dest="pull",
+        default=False,
+        help="Do a 'git pull' if you've set a remote with -r it will pull from there"
+    )
 
-    parser.add_argument("-f", "--fetch",
-                action      = "store_true",
-                dest        = "fetch",
-                default     = False,
-                help        = "Do a 'git fetch' if you've set a remote with -r it will fetch from there"
-                )
+    parser.add_argument(
+        "-f", "--fetch",
+        action="store_true",
+        dest="fetch",
+        default=False,
+        help="Do a 'git fetch' if you've set a remote with -r it will fetch from there"
+    )
 
-    parser.add_argument("--exec", "--execute",
-                action      = "store",
-                dest        = "command",
-                type        = str,
-                default     = "",
-                help        = "Execute a shell command in each repository"
-                )
+    parser.add_argument(
+        "--exec", "--execute",
+        action="store",
+        dest="command",
+        type=str,
+        default="",
+        help="Execute a shell command in each repository"
+    )
 
-    parser.add_argument("-c", "--clear",
-                action      = "store_true",
-                dest        = "clear",
-                default     = False,
-                help        = "Clear screen on startup"
-                )
+    parser.add_argument(
+        "-c", "--clear",
+        action="store_true",
+        dest="clear",
+        default=False,
+        help="Clear screen on startup"
+    )
 
-    parser.add_argument("-C", "--count-dirty",
-                action      = "store_true",
-                dest        = "count",
-                default     = False,
-                help        = "Only display a count of not-clean repos"
-                )
+    parser.add_argument(
+        "-C", "--count-dirty",
+        action="store_true",
+        dest="count",
+        default=False,
+        help="Only display a count of not-clean repos"
+    )
 
-    parser.add_argument("-q", "--quiet",
-                action      = "store_true",
-                dest        = "quiet",
-                default     = False,
-                help        = "Skip startup info"
-                )
+    parser.add_argument(
+        "-q", "--quiet",
+        action="store_true",
+        dest="quiet",
+        default=False,
+        help="Skip startup info"
+    )
 
-    parser.add_argument("-H", "--hide-clean",
-                action      = "store_true",
-                dest        = "hide_clean",
-                default     = False,
-                help        = "Hide clean repos"
-                )
+    parser.add_argument(
+        "-H", "--hide-clean",
+        action="store_true",
+        dest="hide_clean",
+        default=False,
+        help="Hide clean repos"
+    )
 
-    parser.add_argument("-R", "--relative",
-                action      = "store_true",
-                dest        = "relative",
-                default     = False,
-                help        = "Print relative paths"
-                )
+    parser.add_argument(
+        "-R", "--relative",
+        action="store_true",
+        dest="relative",
+        default=False,
+        help="Print relative paths"
+    )
 
-    parser.add_argument("-n", "--no-colors",
-                action      = "store_false",
-                dest        = "colors",
-                default     = True,
-                help        = "Disable ANSI color output. Disregard the alleged default -- color is on by default."
-                )
+    parser.add_argument(
+        "-n", "--no-colors",
+        action="store_false",
+        dest="colors",
+        default=True,
+        help="Disable ANSI color output. Disregard the alleged default -- color is on by default."
+    )
 
-    parser.add_argument("-b", "--branch",
-                action      = "store",
-                dest        = "branch",
-                default     = "master",
-                help        = "Warn if not on this branch. Set to empty string (-b '') to disable this feature."
-                )
+    parser.add_argument(
+        "-b", "--branch",
+        action="store",
+        dest="branch",
+        default="master",
+        help="Warn if not on this branch. Set to empty string (-b '') to disable this feature."
+    )
 
-    parser.add_argument("--recursive",
-                action      = "store_true",
-                dest        = "recursive",
-                default     = False,
-                help        = "Recursively search for git repos"
-                )
+    parser.add_argument(
+        "--recursive",
+        action="store_true",
+        dest="recursive",
+        default=False,
+        help="Recursively search for git repos"
+    )
 
-    parser.add_argument("--skip-symlinks",
-                action    = "store_true",
-                dest      = "skipSymLinks",
-                default   = False,
-                help      = "Skip symbolic links when searching for git repos"
-                )
+    parser.add_argument(
+        "--skip-symlinks",
+        action="store_true",
+        dest="skipSymLinks",
+        default=False,
+        help="Skip symbolic links when searching for git repos"
+    )
 
-    parser.add_argument("-e", "--exclude",
-                action      = "append",
-                dest        = "exclude",
-                default     = [],
-                help        = "Regex to exclude directories"
-                )
+    parser.add_argument(
+        "-e", "--exclude",
+        action="append",
+        dest="exclude",
+        default=[],
+        help="Regex to exclude directories"
+    )
 
-    parser.add_argument("-B", "--checkout-branch",
-                action      = "store",
-                dest        = "cbranch",
-                default     = None,
-                help        = "Checkout branch"
-                )
+    parser.add_argument(
+        "-B", "--checkout-branch",
+        action="store",
+        dest="cbranch",
+        default=None,
+        help="Checkout branch"
+    )
 
-    parser.add_argument("--warn-unversioned",
-                action      = "store_true",
-                dest        = "unversioned",
-                default     = False,
-                help        = "Prints a warning if a directory is not under git version control"
-                )
+    parser.add_argument(
+        "--warn-unversioned",
+        action="store_true",
+        dest="unversioned",
+        default=False,
+        help="Prints a warning if a directory is not under git version control"
+    )
 
-    if use_argcomplete:
-        autocomplete(parser)
+    autocomplete(parser)
     options = parser.parse_args(args)
     return options
 
@@ -286,7 +303,7 @@ def check(dirname, options):
         infile = os.path.join(dirname, infile)
 
         # is there a .clustergit-ignore file
-        if os.path.exists(os.path.join(infile, ".clustergit-ignore")) :
+        if os.path.exists(os.path.join(infile, ".clustergit-ignore")):
 
             if options.verbose:
                 print("skipping %s directory" % infile)
@@ -490,6 +507,7 @@ def main(args):
             sys.stdout.write("Done\n")
     except (KeyboardInterrupt, SystemExit):
         sys.stdout.write("\n")
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
