@@ -399,7 +399,7 @@ def check(dirname, options):
                 )
                 if options.verbose:
                     sys.stdout.write(pull + "\n")
-                if "Already up-to-date" in pull:
+                if re.search(r'Already up.to.date', pull):
                     if not options.hide_clean:
                         messages.append(colorize(Colors.OKGREEN, "Pulled nothing"))
                 elif "CONFLICT" in pull:
