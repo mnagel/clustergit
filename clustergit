@@ -5,12 +5,16 @@
 from __future__ import print_function
 
 import argparse
+import concurrent
 import io
+import itertools
 import os
 import re
 import subprocess
 import sys
+import time
 from argparse import ArgumentParser
+from concurrent import futures
 from typing import List
 
 # Special imports for Windows systems
@@ -259,6 +263,22 @@ def read_arguments(args):
         help="Prints a warning if a directory is not under git version control"
     )
 
+    parser.add_argument(
+        "--workers",
+        type=int,
+        dest="thread_pool_workers",
+        default=4,
+        help="Workers in thread pool for parallel execution"
+    )
+
+    parser.add_argument(
+        "--print-asap",
+        action="store_true",
+        dest="print_asap",
+        default=False,
+        help="Print repository status as soon as possible not preserving order"
+    )
+
     autocomplete(parser)
     options = parser.parse_args(args)
     return options
@@ -484,12 +504,36 @@ def scan(dirpath, dirnames, options) -> List[GitDir]:
 
 
 def analyze(git_dirs: List[GitDir], options):
-    dirties = 0
-    for git_dir in git_dirs:
+    def analyze_single(git_dir: GitDir):
         git_dir.analyze(options)
+        return git_dir
+
+    spinner = itertools.cycle(['.   ', ' .  ', '  . ', '   .', '  . ', ' .  '])
+    dirties = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=options.thread_pool_workers) as executor:
+        # Submit for parallel execution
+        fs = {executor.submit(analyze_single, git_dir): git_dir.path for git_dir in git_dirs}
+
+        try:
+            if options.print_asap:
+                # Print results soon as one is finished (prints faster but does not preserve order)
+                for future in concurrent.futures.as_completed(fs):
+                    print(future.result().get_msg_buffer_as_str(), end="")
+            else:
+                # Wait for parallel execution to finish
+                for i, (future, label) in enumerate(fs.items()):
+                    while not future.done():
+                        print('Waiting for %s %s (%d/%d)' % (label, next(spinner), i + 1, len(fs)), end='\r',
+                              flush=True)
+                        time.sleep(0.1)
+                    print(future.result().get_msg_buffer_as_str(), end="")
+        finally:
+            for future in fs:
+                future.cancel()
+
+    for git_dir in git_dirs:
         if git_dir.dirty:
             dirties += 1
-        print(git_dir.get_msg_buffer_as_str(), end="")
 
     return dirties
 
