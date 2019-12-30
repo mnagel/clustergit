@@ -327,8 +327,8 @@ def check(dirname, options):
                 cmdprefix = cmdprefix + ' LC_ALL=C'
 
             if options.verbose:
-                sys.stdout.write("\n")
-                sys.stdout.write("---------------- " + infile + " -----------------\n")
+                print("")
+                print("---------------- " + infile + " -----------------")
 
             # Yay, we found one!
             gitted = True
@@ -337,7 +337,7 @@ def check(dirname, options):
             # and ask git for a status
             status, out = run('%s git status' % cmdprefix, options)
             if options.verbose:
-                sys.stdout.write(out + "\n")
+                print(out)
 
             if options.relative:
                 infile = os.path.relpath(infile, options.dirname)
@@ -385,7 +385,7 @@ def check(dirname, options):
                     % (cmdprefix, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
-                    sys.stdout.write(push + "\n")
+                    print(push)
                 if re.search(r'\[(remote )?rejected\]', push):
                     messages.append(colorize(Colors.FAIL, "Push rejected"))
                 else:
@@ -398,7 +398,7 @@ def check(dirname, options):
                     % (cmdprefix, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
-                    sys.stdout.write(pull + "\n")
+                    print(pull)
                 if re.search(r'Already up.to.date', pull):
                     if not options.hide_clean:
                         messages.append(colorize(Colors.OKGREEN, "Pulled nothing"))
@@ -419,7 +419,7 @@ def check(dirname, options):
                     % (cmdprefix, ' '.join(options.remote.split(":"))), options
                 )
                 if options.verbose:
-                    sys.stdout.write(fetch + "\n")
+                    print(fetch)
                 if "error: " in fetch:
                     messages.append(colorize(Colors.FAIL, "Fetch fatal"))
                 else:
@@ -463,7 +463,7 @@ def check(dirname, options):
             run('cd ../', options)
 
             if options.verbose:
-                sys.stdout.write("---------------- " + infile + " -----------------\n")
+                print("---------------- " + infile + " -----------------")
         elif options.unversioned and not infile.startswith("./.") and os.path.isdir(infile):
             sys.stdout.write(infile.ljust(options.align) + ": ")
             write_with_color(sys.stdout, colorize(Colors.WARNING, "Not a GIT repository") + "\n")
@@ -481,8 +481,8 @@ def main(args):
             os.system('clear')
 
         if not options.quiet:
-            sys.stdout.write('Starting git status...\n')
-            sys.stdout.write('Scanning sub directories of %s\n' % options.dirname)
+            print('Starting git status...')
+            print('Scanning sub directories of %s' % options.dirname)
 
         if not options.colors:
             # noinspection PyGlobalUndefined
@@ -503,14 +503,14 @@ def main(args):
             show_error("Error: None of those sub directories had a .git file.\n")
 
         if options.count:
-            sys.stdout.write(str(dirties) + "\n")
+            print(str(dirties))
         if dirties == 0 and options.hide_clean:
-            sys.stdout.write("All repos clean\n")
+            print("All repos clean")
 
         if not options.quiet:
-            sys.stdout.write("Done\n")
+            print("Done")
     except (KeyboardInterrupt, SystemExit):
-        sys.stdout.write("\n")
+        print("")
 
 
 if __name__ == '__main__':
