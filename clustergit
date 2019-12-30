@@ -5,11 +5,13 @@
 from __future__ import print_function
 
 import argparse
+import io
 import os
 import re
 import subprocess
 import sys
 from argparse import ArgumentParser
+from typing import List
 
 # Special imports for Windows systems
 if os.name == 'nt':
@@ -268,207 +270,228 @@ def die_with_error(error="Undefined Error!"):
     sys.exit(1)
 
 
-def is_excluded(path, options):
-    for ex in options.exclude:
-        if re.search(ex, path):
+class GitDir:
+    def __init__(self, path: str, options):
+        self.path = path
+
+        if options.relative:
+            self.path = os.path.relpath(self.path, options.dirname)
+
+        self.dirty = None
+        self.msg_buffer = io.StringIO()
+
+    def analyze(self, options):
+        cmdprefix = ''
+        if os.name != 'nt':
+            cmdprefix = cmdprefix + ' LC_ALL=C'
+
+        if options.verbose:
+            self.write_to_msg_buffer("\n")
+            self.write_to_msg_buffer("---------------- " + self.path + " -----------------\n")
+
+        # OK, contains a .git file. Let's descend into it
+        # and ask git for a status
+        status, out = self.run('%s git status' % cmdprefix, options, self.path)
+        if options.verbose:
+            self.write_to_msg_buffer(out + "\n")
+
+        if options.relative:
+            self.path = os.path.relpath(self.path, options.dirname)
+        messages = []
+        clean = True
+        can_push = False
+        can_pull = True
+        if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
+            branch = out.splitlines()[0].replace("On branch ", "")
+            messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
+            can_pull = False
+            clean = False
+        # changed from "directory" to "tree" in git 2.9.1
+        # https://github.com/mnagel/clustergit/issues/18
+        if re.search(r'nothing to commit.?.?working (directory|tree) clean.?', out):
+            messages.append(colorize(Colors.OKBLUE, "No Changes"))
+            can_push = True
+        elif 'nothing added to commit but untracked files present' in out:
+            messages.append(colorize(Colors.WARNING, "Untracked files"))
+            can_push = True
+            clean = False
+        else:
+            messages.append(colorize(Colors.FAIL, "Changes"))
+            can_pull = False
+            clean = False
+        if 'Your branch is ahead of' in out:
+            messages.append(colorize(Colors.FAIL, "Unpushed commits"))
+            can_pull = False
+            clean = False
+        else:
+            can_push = False
+
+        if clean:
+            if not options.hide_clean:
+                messages = [colorize(Colors.OKGREEN, "Clean")]
+            else:
+                messages = []
+        self.dirty = not clean
+
+        if can_push and options.push:
+            # Push to the remote
+            status, push = self.run(
+                '%s git push %s'
+                % (cmdprefix, ' '.join(options.remote.split(":"))), options, self.path
+            )
             if options.verbose:
-                print("skipping %s" % path)
-            return True
-    return False
+                self.write_to_msg_buffer(push + "\n")
+            if re.search(r'\[(remote )?rejected\]', push):
+                messages.append(colorize(Colors.FAIL, "Push rejected"))
+            else:
+                messages.append(colorize(Colors.OKBLUE, "Pushed OK"))
+
+        if can_pull and options.pull:
+            # Pull from the remote
+            status, pull = self.run(
+                '%s git pull %s'
+                % (cmdprefix, ' '.join(options.remote.split(":"))), options, self.path
+            )
+            if options.verbose:
+                self.write_to_msg_buffer(pull + "\n")
+            if re.search(r'Already up.to.date', pull):
+                if not options.hide_clean:
+                    messages.append(colorize(Colors.OKGREEN, "Pulled nothing"))
+            elif "CONFLICT" in pull:
+                messages.append(colorize(Colors.FAIL, "Pull conflict"))
+            elif "fatal: No remote repository specified." in pull:
+                messages.append(colorize(Colors.WARNING, "Pull remote not configured"))
+            elif "fatal: " in pull:
+                messages.append(colorize(Colors.FAIL, "Pull fatal"))
+                messages.append("\n" + pull)
+            else:
+                messages.append(colorize(Colors.OKBLUE, "Pulled"))
+
+        if options.fetch:
+            # fetch from the remote
+            # deal with [deleted] [new branch] and sha
+            status, fetch = self.run(
+                '%s git fetch --all --prune %s'
+                % (cmdprefix, ' '.join(options.remote.split(":"))), options, self.path
+            )
+            if options.verbose:
+                self.write_to_msg_buffer(fetch + "\n")
+            if "error: " in fetch:
+                messages.append(colorize(Colors.FAIL, "Fetch fatal"))
+            else:
+                messages.append(colorize(Colors.OKPURPLE, "Fetched"))
+            if status != 0:
+                messages.append(colorize(Colors.FAIL, "Fetch unsuccessful"))
+
+        if options.command:
+            exit_status, output = self.run(
+                '%s %s' % (cmdprefix, options.command),
+                options, self.path
+            )
+            if not options.colors:
+                output = decolorize('', output)
+            if not options.quiet:
+                messages.append('\n' + output)
+                if exit_status != 0:
+                    msg = "The command exited with status {s} in {r}\nThe output was:{o}"
+                    msg = msg.format(s=exit_status, r=self.path, o=output)
+                    self.write_to_msg_buffer(colorize(Colors.FAIL, msg))
+
+        if options.cbranch:
+            status, checkoutbranch = self.run(
+                '%s git checkout %s'
+                % (cmdprefix, options.cbranch), options, self.path
+            )
+            if "Already on" in checkoutbranch:
+                if not options.hide_clean:
+                    messages.append(colorize(Colors.OKGREEN, "No action"))
+            elif "error: " in checkoutbranch:
+                messages.append(colorize(Colors.FAIL, "Checkout failed"))
+            else:
+                messages.append(colorize(Colors.OKBLUE, "Checkout successful"))
+
+        if not options.count and messages:
+            self.write_to_msg_buffer(self.path.ljust(options.align) + ": ")
+            write_with_color(self.msg_buffer, ", ".join(messages) + "\n")
+
+        if options.verbose:
+            self.write_to_msg_buffer("---------------- " + self.path + " -----------------\n")
+
+    def run(self, command, options, work_dir):
+        if options.verbose:
+            self.write_to_msg_buffer("running %s\n" % command)
+        try:
+            output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True, cwd=work_dir)
+            if isinstance(output, bytes):
+                output = output.decode("utf-8")
+            return 0, output
+        except subprocess.CalledProcessError as e:
+            if isinstance(e.output, bytes):
+                e.output = e.output.decode("utf-8")
+            return e.returncode, e.output
+
+    def write_to_msg_buffer(self, msg):
+        self.msg_buffer.write(msg)
+
+    def get_msg_buffer_as_str(self):
+        return self.msg_buffer.getvalue()
 
 
-def run(command, options):
-    if options.verbose:
-        print("running %s" % command)
-    try:
-        output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
-        if isinstance(output, bytes):
-            output = output.decode("utf-8")
-        return 0, output
-    except subprocess.CalledProcessError as e:
-        if isinstance(e.output, bytes):
-            e.output = e.output.decode("utf-8")
-        return e.returncode, e.output
-
-
-def check(dirname, options):
+def scan(dirpath, dirnames, options) -> List[GitDir]:
     """
     Check the subdirectories of a single directory.
     See if they are versioned in git and display the requested information.
     """
-    gitted = False
-    dirties = 0
 
-    # See whats here
-    files = os.listdir(dirname)
-    files[:] = [f for f in files if not is_excluded(os.path.join(dirname, f), options)]
-    files.sort()
-    for infile in files:
-        infile = os.path.join(dirname, infile)
+    def dir_filter(path):
+        # Remove excluded directories
+        for ex in options.exclude:
+            if re.search(ex, path):
+                if options.verbose:
+                    print("skipping %s" % path)
+                return False
 
-        # is there a .clustergit-ignore file
-        if os.path.exists(os.path.join(infile, ".clustergit-ignore")):
-
+        # Remove if is there a .clustergit-ignore file
+        if os.path.exists(os.path.join(path, ".clustergit-ignore")):
             if options.verbose:
-                print("skipping %s directory" % infile)
+                print("skipping %s directory" % path)
+            return False
 
-            # Ignore this folder and continue scanning
-            continue
-
-        # is there a .git file
-        if os.path.exists(os.path.join(infile, ".git")):
-            if options.skipSymLinks and os.path.islink(infile):
+        # Remove if there is no .git dir
+        if os.path.exists(os.path.join(path, ".git")):
+            if options.skipSymLinks and os.path.islink(path):
                 if options.verbose:
-                    print("skipping %s symbolic link" % infile)
-                continue
-
-            cmdprefix = 'cd "%s" &&' % infile
-            if os.name != 'nt':
-                cmdprefix = cmdprefix + ' LC_ALL=C'
-
-            if options.verbose:
-                print("")
-                print("---------------- " + infile + " -----------------")
-
-            # Yay, we found one!
-            gitted = True
-
-            # OK, contains a .git file. Let's descend into it
-            # and ask git for a status
-            status, out = run('%s git status' % cmdprefix, options)
-            if options.verbose:
-                print(out)
-
-            if options.relative:
-                infile = os.path.relpath(infile, options.dirname)
-            messages = []
-            clean = True
-            can_push = False
-            can_pull = True
-            if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
-                branch = out.splitlines()[0].replace("On branch ", "")
-                messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
-                can_pull = False
-                clean = False
-            # changed from "directory" to "tree" in git 2.9.1
-            # https://github.com/mnagel/clustergit/issues/18
-            if re.search(r'nothing to commit.?.?working (directory|tree) clean.?', out):
-                messages.append(colorize(Colors.OKBLUE, "No Changes"))
-                can_push = True
-            elif 'nothing added to commit but untracked files present' in out:
-                messages.append(colorize(Colors.WARNING, "Untracked files"))
-                can_push = True
-                clean = False
-            else:
-                messages.append(colorize(Colors.FAIL, "Changes"))
-                can_pull = False
-                clean = False
-            if 'Your branch is ahead of' in out:
-                messages.append(colorize(Colors.FAIL, "Unpushed commits"))
-                can_pull = False
-                clean = False
-            else:
-                can_push = False
-
-            if clean:
-                if not options.hide_clean:
-                    messages = [colorize(Colors.OKGREEN, "Clean")]
-                else:
-                    messages = []
-            else:
-                dirties += 1
-
-            if can_push and options.push:
-                # Push to the remote
-                status, push = run(
-                    '%s git push %s'
-                    % (cmdprefix, ' '.join(options.remote.split(":"))), options
-                )
-                if options.verbose:
-                    print(push)
-                if re.search(r'\[(remote )?rejected\]', push):
-                    messages.append(colorize(Colors.FAIL, "Push rejected"))
-                else:
-                    messages.append(colorize(Colors.OKBLUE, "Pushed OK"))
-
-            if can_pull and options.pull:
-                # Pull from the remote
-                status, pull = run(
-                    '%s git pull %s'
-                    % (cmdprefix, ' '.join(options.remote.split(":"))), options
-                )
-                if options.verbose:
-                    print(pull)
-                if re.search(r'Already up.to.date', pull):
-                    if not options.hide_clean:
-                        messages.append(colorize(Colors.OKGREEN, "Pulled nothing"))
-                elif "CONFLICT" in pull:
-                    messages.append(colorize(Colors.FAIL, "Pull conflict"))
-                elif "fatal: No remote repository specified." in pull:
-                    messages.append(colorize(Colors.WARNING, "Pull remote not configured"))
-                elif "fatal: " in pull:
-                    messages.append(colorize(Colors.FAIL, "Pull fatal"))
-                else:
-                    messages.append(colorize(Colors.OKBLUE, "Pulled"))
-
-            if options.fetch:
-                # fetch from the remote
-                # deal with [deleted] [new branch] and sha
-                status, fetch = run(
-                    '%s git fetch --all --prune %s'
-                    % (cmdprefix, ' '.join(options.remote.split(":"))), options
-                )
-                if options.verbose:
-                    print(fetch)
-                if "error: " in fetch:
-                    messages.append(colorize(Colors.FAIL, "Fetch fatal"))
-                else:
-                    messages.append(colorize(Colors.OKPURPLE, "Fetched"))
-                if status != 0:
-                    messages.append(colorize(Colors.FAIL, "Fetch unsuccessful"))
-
-            if options.command:
-                exit_status, output = run(
-                    '%s %s' % (cmdprefix, options.command),
-                    options
-                )
-                if not options.colors:
-                    output = decolorize('', output)
-                if not options.quiet:
-                    messages.append('\n' + output)
-                    if exit_status != 0:
-                        msg = "The command exited with status {s} in {r}\nThe output was:{o}"
-                        msg = msg.format(s=exit_status, r=infile, o=output)
-                        die_with_error(colorize(Colors.FAIL, msg))
-
-            if options.cbranch:
-                status, checkoutbranch = run(
-                    '%s git checkout %s'
-                    % (cmdprefix, options.cbranch), options
-                )
-                if "Already on" in checkoutbranch:
-                    if not options.hide_clean:
-                        messages.append(colorize(Colors.OKGREEN, "No action"))
-                elif "error: " in checkoutbranch:
-                    messages.append(colorize(Colors.FAIL, "Checkout failed"))
-                else:
-                    messages.append(colorize(Colors.OKBLUE, "Checkout successful"))
-
-            if not options.count and messages:
-                sys.stdout.write(infile.ljust(options.align) + ": ")
-                write_with_color(sys.stdout, ", ".join(messages) + "\n")
+                    print("skipping %s symbolic link" % path)
+                return False
+        else:
+            # Not a git directory
+            if options.unversioned:
+                sys.stdout.write(path.ljust(options.align) + ": ")
+                write_with_color(sys.stdout, colorize(Colors.WARNING, "Not a GIT repository") + "\n")
                 sys.stdout.flush()
+            return False
 
-            # Come out of the dir and into the next
-            run('cd ../', options)
+        return True
 
-            if options.verbose:
-                print("---------------- " + infile + " -----------------")
-        elif options.unversioned and not infile.startswith("./.") and os.path.isdir(infile):
-            sys.stdout.write(infile.ljust(options.align) + ": ")
-            write_with_color(sys.stdout, colorize(Colors.WARNING, "Not a GIT repository") + "\n")
-            sys.stdout.flush()
-    return gitted, dirties
+    # Sort directories by name
+    dirnames.sort()
+
+    # Filter directories and convert to paths
+    paths = [os.path.join(dirpath, dirname) for dirname in dirnames]
+    git_dirs = [GitDir(path, options) for path in paths if dir_filter(path)]
+
+    return git_dirs
+
+
+def analyze(git_dirs: List[GitDir], options):
+    dirties = 0
+    for git_dir in git_dirs:
+        git_dir.analyze(options)
+        if git_dir.dirty:
+            dirties += 1
+        print(git_dir.get_msg_buffer_as_str(), end="")
+
+    return dirties
 
 
 # -------------------
@@ -488,18 +511,17 @@ def main(args):
             global colorize
             colorize = decolorize
 
-        gitted = False
-        dirties = 0
+        git_dirs = []
 
-        for (path, dirs, files) in os.walk(options.dirname, topdown=True):
-            new_gitted, new_dirties = check(path, options)
-            gitted = gitted or new_gitted
-            dirties += new_dirties
+        for (path, dirs, files) in os.walk(options.dirname):
+            git_dirs.extend(scan(path, dirs, options))
             if not options.recursive:
                 break
 
-        if not gitted:
+        if len(git_dirs) == 0:
             die_with_error("None of those sub directories had a .git file")
+
+        dirties = analyze(git_dirs, options)
 
         if options.count:
             print(str(dirties))
