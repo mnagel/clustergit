@@ -11,6 +11,7 @@ import subprocess
 import sys
 from argparse import ArgumentParser
 
+# Special imports for Windows systems
 if os.name == 'nt':
     from ctypes import windll, c_ulong
 
@@ -480,7 +481,6 @@ def main(args):
             os.system('clear')
 
         if not options.quiet:
-            print('Starting git status...')
             print('Scanning sub directories of %s' % options.dirname)
 
         if not options.colors:
