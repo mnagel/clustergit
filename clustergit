@@ -27,8 +27,7 @@ def colorize(color, message):
     return "%s%s%s" % (color, message, Colors.ENDC)
 
 
-# noinspection PyUnusedLocal
-def colorize_off(color, message):
+def decolorize(_color, message):
     for color in Colors.ALL:
         message = message.replace(color, '')
     return message
@@ -433,7 +432,7 @@ def check(dirname, options):
                     options
                 )
                 if not options.colors:
-                    output = colorize_off('', output)
+                    output = decolorize('', output)
                 if not options.quiet:
                     messages.append('\n' + output)
                     if exit_status != 0:
@@ -487,7 +486,7 @@ def main(args):
         if not options.colors:
             # noinspection PyGlobalUndefined
             global colorize
-            colorize = colorize_off
+            colorize = decolorize
 
         gitted = False
         dirties = 0
