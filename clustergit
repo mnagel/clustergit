@@ -261,9 +261,9 @@ def read_arguments(args):
     return options
 
 
-def show_error(error="Undefined Error!"):
+def die_with_error(error="Undefined Error!"):
     """Writes an error to stderr"""
-    write_with_color(sys.stderr, error)
+    write_with_color(sys.stderr, "Error: %s\n" % error)
     sys.exit(1)
 
 
@@ -438,7 +438,7 @@ def check(dirname, options):
                     if exit_status != 0:
                         msg = "The command exited with status {s} in {r}\nThe output was:{o}"
                         msg = msg.format(s=exit_status, r=infile, o=output)
-                        show_error(colorize(Colors.FAIL, msg))
+                        die_with_error(colorize(Colors.FAIL, msg))
 
             if options.cbranch:
                 status, checkoutbranch = run(
@@ -499,7 +499,7 @@ def main(args):
                 break
 
         if not gitted:
-            show_error("Error: None of those sub directories had a .git file.\n")
+            die_with_error("None of those sub directories had a .git file")
 
         if options.count:
             print(str(dirties))
