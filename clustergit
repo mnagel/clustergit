@@ -14,13 +14,13 @@ from argparse import ArgumentParser
 if os.name == 'nt':
     from ctypes import windll, c_ulong
 
+# Optional autocomplete import
 try:
     from argcomplete import autocomplete
 except ImportError:
-    # noinspection PyUnusedLocal
-    def autocomplete(args):
+    # Notice: install "argcomplete" to automatic complete the arguments
+    def autocomplete(_args):
         pass
-        # print('Notice: install "argcomplete" to automatic complete the arguments')
 
 
 def colorize(color, message):
