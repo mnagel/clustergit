@@ -517,7 +517,7 @@ def analyze(git_dirs: List[GitDir], options):
             if options.print_asap:
                 # Print results soon as one is finished (prints faster but does not preserve order)
                 for future in concurrent.futures.as_completed(fs):
-                    print(future.result().get_msg_buffer_as_str(), end="")
+                    write_with_color(sys.stdout, future.result().get_msg_buffer_as_str())
             else:
                 # Wait for parallel execution to finish
                 for i, (future, label) in enumerate(fs.items()):
@@ -525,7 +525,7 @@ def analyze(git_dirs: List[GitDir], options):
                         print('Waiting for %s %s (%d/%d)' % (label, next(spinner), i + 1, len(fs)), end='\r',
                               flush=True)
                         time.sleep(0.1)
-                    print(future.result().get_msg_buffer_as_str(), end="")
+                    write_with_color(sys.stdout, future.result().get_msg_buffer_as_str())
         finally:
             for future in fs:
                 future.cancel()
