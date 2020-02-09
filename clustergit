@@ -377,7 +377,8 @@ class GitDir:
                     messages.append(colorize(Colors.OKGREEN, "Pulled nothing"))
             elif "CONFLICT" in pull:
                 messages.append(colorize(Colors.FAIL, "Pull conflict"))
-            elif "fatal: No remote repository specified." in pull:
+            elif "fatal: No remote repository specified." in pull\
+                    or "There is no tracking information for the current branch." in pull:
                 messages.append(colorize(Colors.WARNING, "Pull remote not configured"))
             elif "fatal: " in pull:
                 messages.append(colorize(Colors.FAIL, "Pull fatal"))
