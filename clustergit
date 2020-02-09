@@ -79,7 +79,7 @@ def write_color(out, color):
 
 def write_with_color(out, msg):
     # build regex for splitting by colors, split and iterate over elements
-    for p in re.split(('(%s)' % '|'.join(Colors.ALL)).replace('[', '\['), msg):
+    for p in re.split(('(%s)' % '|'.join(Colors.ALL)).replace('[', '\\['), msg):
         # check if element is a color
         if p in Colors.ALL:
             write_color(out, p)
