@@ -5,8 +5,6 @@ It is especially useful to run `git status` recursively on one folder.
 
 clustergit supports `git status`, `git pull`, `git push`, and more.
 
-It is a renamed and slightly improved version of Mike Pearce's `show_status`.
-
 ## Screenshot
 ![clustergit screenshot](/doc/clustergit.png?raw=true "clustergit screenshot")
 
@@ -26,10 +24,10 @@ Make the script executable and drop it somewhere in your $PATH.
 
 ## Dependencies
 
- * python2 or python3
- * commands or subprocess
- * argparse
- * argcomplete (optional)
+ * python3
+ 
+For latest version with python 2.7 support see:
+https://github.com/mnagel/clustergit/releases/tag/python27
 
 ## Usage
 
@@ -43,8 +41,10 @@ If there are no changes it can also push and pull to/from a remote location.
 
 ```
 usage: clustergit [-h] [-d DIRNAME] [-v] [-a ALIGN] [-r REMOTE] [--push] [-p]
-                  [--exec COMMAND] [-c] [-C] [-q] [-H] [-R] [-n] [-b BRANCH]
-                  [--recursive] [-e EXCLUDE] [-B CBRANCH] [--warn-unversioned]
+                  [-f] [--exec COMMAND] [-c] [-C] [-q] [-H] [-R] [-n]
+                  [-b BRANCH] [--recursive] [--skip-symlinks] [-e EXCLUDE]
+                  [-B CBRANCH] [--warn-unversioned]
+                  [--workers THREAD_POOL_WORKERS] [--print-asap]
 
 clustergit will scan through all subdirectories looking for a .git directory.
 When it finds one it'll look to see if there are any changes and let you know.
@@ -64,6 +64,8 @@ optional arguments:
                         push to there (default: False)
   -p, --pull            Do a 'git pull' if you've set a remote with -r it will
                         pull from there (default: False)
+  -f, --fetch           Do a 'git fetch' if you've set a remote with -r it
+                        will fetch from there (default: False)
   --exec COMMAND, --execute COMMAND
                         Execute a shell command in each repository (default: )
   -c, --clear           Clear screen on startup (default: False)
@@ -78,12 +80,20 @@ optional arguments:
                         Warn if not on this branch. Set to empty string (-b
                         '') to disable this feature. (default: master)
   --recursive           Recursively search for git repos (default: False)
+  --skip-symlinks       Skip symbolic links when searching for git repos
+                        (default: False)
   -e EXCLUDE, --exclude EXCLUDE
                         Regex to exclude directories (default: [])
   -B CBRANCH, --checkout-branch CBRANCH
                         Checkout branch (default: None)
   --warn-unversioned    Prints a warning if a directory is not under git
                         version control (default: False)
+  --workers THREAD_POOL_WORKERS
+                        Workers in thread pool for parallel execution
+                        (default: 4)
+  --print-asap          Print repository status as soon as possible not
+                        preserving order (default: False)
+
 ```
 
 ## Contact
@@ -105,8 +115,8 @@ Copyright:
 
 * 2010 Mike Pearce mike@mikepearce.net
 * 2010 catchamonkey chris@sedlmayr.co.uk
-* 2011-2016 Michael Nagel ubuntu@nailor.devzero.de
 * 2015 sedrubal sebastian.endres@online.de
+* 2011-2020 Michael Nagel ubuntu@nailor.devzero.de
 
 License:
 
