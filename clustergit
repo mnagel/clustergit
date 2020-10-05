@@ -277,6 +277,14 @@ def read_arguments(args):
         help="Print repository status as soon as possible not preserving order"
     )
 
+    parser.add_argument(
+        "--global-ignore-file",
+        type=str,
+        dest="global_ignore_file",
+        default="$HOME/.config/clustergit/.clustergit-ignore",
+        help="Global clustergit-ignore file"
+    )
+
     autocomplete(parser)
     options = parser.parse_args(args)
     return options
@@ -497,6 +505,7 @@ def scan(dirpath, dirnames, options) -> List[GitDir]:
 
     # Filter directories and convert to paths
     paths = [os.path.join(dirpath, dirname) for dirname in dirnames]
+
     git_dirs = [GitDir(path, options) for path in paths if dir_filter(path)]
 
     return git_dirs
@@ -554,9 +563,22 @@ def main(args):
             global colorize
             colorize = decolorize
 
+        options.global_ignore_file = os.path.expandvars(options.global_ignore_file)
+
+        if options.global_ignore_file and os.path.exists(options.global_ignore_file):
+            print('Reading global .clustergit-ignore file from {}'.format(options.global_ignore_file))
+            with open(options.global_ignore_file, 'r') as ignore_file:
+                for line in ignore_file:
+                    options.exclude.append(re.compile(line.strip()))
+
         git_dirs = []
 
-        for (path, dirs, files) in os.walk(options.dirname):
+        for (path, dirs, files) in os.walk(options.dirname, topdown=True):
+
+            # Filter dirs to prevent unnecessary recursion in subdirectories
+            if options.exclude:
+                dirs[:] = [d for d in dirs if not any([re.search(regex, os.path.join(path, d)) for regex in options.exclude])]
+
             git_dirs.extend(scan(path, dirs, options))
             if not options.recursive:
                 break
