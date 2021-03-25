@@ -217,7 +217,7 @@ def read_arguments(args):
         "-b", "--branch",
         action="store",
         dest="branch",
-        default="master",
+        default="main",
         help="Warn if not on this branch. Set to empty string (-b '') to disable this feature."
     )
 
