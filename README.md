@@ -78,7 +78,7 @@ optional arguments:
                         default -- color is on by default. (default: True)
   -b BRANCH, --branch BRANCH
                         Warn if not on this branch. Set to empty string (-b
-                        '') to disable this feature. (default: master)
+                        '') to disable this feature. (default: main)
   --recursive           Recursively search for git repos (default: False)
   --skip-symlinks       Skip symbolic links when searching for git repos
                         (default: False)
