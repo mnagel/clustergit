@@ -522,7 +522,7 @@ def analyze(git_dirs: List[GitDir], options):
                 # Wait for parallel execution to finish
                 for i, (future, label) in enumerate(fs.items()):
                     while not future.done():
-                        print('Waiting for %s %s (%d/%d)' % (label, next(spinner), i + 1, len(fs)), end='\r',
+                        print('Waiting for %s %s (%d/%d)' % (label, next(spinner), i + 1, len(fs)), end='\x1b[1K\r',
                               flush=True)
                         time.sleep(0.1)
                     write_with_color(sys.stdout, future.result().get_msg_buffer_as_str())
