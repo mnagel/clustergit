@@ -6,7 +6,7 @@ It is especially useful to run `git status` recursively on one folder.
 clustergit supports `git status`, `git pull`, `git push`, and more.
 
 ## Screenshot
-![clustergit screenshot](/doc/clustergit.png?raw=true "clustergit screenshot")
+![clustergit screenshot](doc/clustergit.png?raw=true "clustergit screenshot")
 
 To reproduce the above locally, run:
 

@@ -102,9 +102,11 @@ def read_arguments(args):
     parser.add_argument(
         "-d", "--dir",
         dest="dirname",
-        action="store",
+        # Action=append allows the caller to specify `-d` multiple times.
+        # For example: `-d foo -d bar/batz/git_repos` would process both directories.
+        action="append",
         help="The directory to parse sub dirs from",
-        default="."
+        default=[]
     )
 
     parser.add_argument(
@@ -546,6 +548,11 @@ def main(args):
         if options.clear:
             os.system('clear')
 
+        # If there are no dirnames set, the list will be empty;
+        # set to default value of current directory.
+        if not options.dirname:
+            options.dirname = ['.']
+
         if not options.quiet:
             print('Scanning sub directories of %s' % options.dirname)
 
@@ -556,10 +563,11 @@ def main(args):
 
         git_dirs = []
 
-        for (path, dirs, files) in os.walk(options.dirname):
-            git_dirs.extend(scan(path, dirs, options))
-            if not options.recursive:
-                break
+        for directory in options.dirname:
+            for (path, dirs, files) in os.walk(directory):
+                git_dirs.extend(scan(dirpath=path, dirnames=dirs, options=options))
+                if not options.recursive:
+                    break
 
         if len(git_dirs) == 0:
             die_with_error("None of those sub directories had a .git file")
