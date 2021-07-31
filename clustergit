@@ -217,8 +217,8 @@ def read_arguments(args):
         "-b", "--branch",
         action="store",
         dest="branch",
-        default="master",
-        help="Warn if not on this branch. Set to empty string (-b '') to disable this feature."
+        default="(master|main)",
+        help="Warn if not on a branch matching this Regex. Set to empty string (-b '') to disable this feature."
     )
 
     parser.add_argument(
@@ -327,7 +327,7 @@ class GitDir:
         clean = True
         can_push = False
         can_pull = True
-        if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
+        if (len(options.branch) > 0 and not re.search(fr'On branch {options.branch}', out)):
             branch = out.splitlines()[0].replace("On branch ", "")
             messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
             can_pull = False
@@ -385,7 +385,7 @@ class GitDir:
                     messages.append(colorize(Colors.OKGREEN, "Pulled nothing"))
             elif "CONFLICT" in pull:
                 messages.append(colorize(Colors.FAIL, "Pull conflict"))
-            elif "fatal: No remote repository specified." in pull\
+            elif "fatal: No remote repository specified." in pull \
                     or "There is no tracking information for the current branch." in pull:
                 messages.append(colorize(Colors.WARNING, "Pull remote not configured"))
             elif "fatal: " in pull:
