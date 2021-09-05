@@ -327,7 +327,7 @@ class GitDir:
         clean = True
         can_push = False
         can_pull = True
-        if (len(options.branch) > 0 and not re.search(fr'On branch {options.branch}', out)):
+        if (len(options.branch) > 0 and not re.search(fr'On branch {options.branch}\n', out)):
             branch = out.splitlines()[0].replace("On branch ", "")
             messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
             can_pull = False
