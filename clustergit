@@ -581,7 +581,7 @@ def main(args: List[str]) -> None:
         options.global_ignore_file = os.path.expandvars(options.global_ignore_file)
 
         if options.global_ignore_file and os.path.exists(options.global_ignore_file):
-            print('Reading global .clustergit-ignore file from {}'.format(options.global_ignore_file))
+            print(f'Reading global .clustergit-ignore file from {options.global_ignore_file}')
             with open(options.global_ignore_file, 'r') as ignore_file:
                 for line in ignore_file:
                     options.exclude.append(re.compile(line.strip()))
