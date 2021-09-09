@@ -13,7 +13,7 @@ import sys
 import time
 from argparse import ArgumentParser
 from concurrent import futures
-from typing import List
+from typing import List, IO, Tuple
 
 # Special imports for Windows systems
 if os.name == 'nt':
@@ -28,11 +28,20 @@ except ImportError:
         pass
 
 
-def colorize(color, message):
+def clearline(msg):
+    # https://stackoverflow.com/a/53843296/2536029
+    CURSOR_UP_ONE = '\033[K'
+    ERASE_LINE = '\x1b[2K'
+    sys.stdout.write(CURSOR_UP_ONE)
+    sys.stdout.write(ERASE_LINE + '\r')
+    print(msg, end='\r')
+
+
+def colorize(color: str, message: str) -> str:
     return "%s%s%s" % (color, message, Colors.ENDC)
 
 
-def decolorize(_color, message):
+def decolorize(_color: str, message: str) -> str:
     for color in Colors.ALL:
         message = message.replace(color, '')
     return message
@@ -66,7 +75,7 @@ class Colors:
     }
 
 
-def write_color(out, color):
+def write_color(out: IO, color: str) -> None:
     # set text attribute for Windows and write ASCII color otherwise
     if os.name == 'nt' and out.isatty():
         windll.Kernel32.SetConsoleTextAttribute(
@@ -77,7 +86,7 @@ def write_color(out, color):
         out.write(color)
 
 
-def write_with_color(out, msg):
+def write_with_color(out: IO, msg: str) -> None:
     # build regex for splitting by colors, split and iterate over elements
     for p in re.split(('(%s)' % '|'.join(Colors.ALL)).replace('[', '\\['), msg):
         # check if element is a color
@@ -90,7 +99,7 @@ def write_with_color(out, msg):
             out.flush()
 
 
-def read_arguments(args):
+def read_arguments(args: List[str]) -> argparse.Namespace:
     parser = ArgumentParser(
         description="""
         clustergit will scan through all subdirectories looking for a .git directory.
@@ -219,8 +228,8 @@ def read_arguments(args):
         "-b", "--branch",
         action="store",
         dest="branch",
-        default="master",
-        help="Warn if not on this branch. Set to empty string (-b '') to disable this feature."
+        default="(master|main)",
+        help="Warn if not on a branch matching this Regex. Set to empty string (-b '') to disable this feature."
     )
 
     parser.add_argument(
@@ -279,19 +288,27 @@ def read_arguments(args):
         help="Print repository status as soon as possible not preserving order"
     )
 
+    parser.add_argument(
+        "--global-ignore-file",
+        type=str,
+        dest="global_ignore_file",
+        default="$HOME/.config/clustergit/.clustergit-ignore",
+        help="Global clustergit-ignore file"
+    )
+
     autocomplete(parser)
     options = parser.parse_args(args)
     return options
 
 
-def die_with_error(error="Undefined Error!"):
+def die_with_error(error: str = "Undefined Error!") -> None:
     """Writes an error to stderr"""
     write_with_color(sys.stderr, "Error: %s\n" % error)
     sys.exit(1)
 
 
 class GitDir:
-    def __init__(self, path: str, options):
+    def __init__(self, path: str, options: argparse.Namespace) -> None:
         self.path = path
 
         if options.relative:
@@ -300,7 +317,7 @@ class GitDir:
         self.dirty = None
         self.msg_buffer = io.StringIO()
 
-    def analyze(self, options):
+    def analyze(self, options: argparse.Namespace) -> None:
         cmdprefix = ''
         if os.name != 'nt':
             cmdprefix = cmdprefix + ' LC_ALL=C'
@@ -321,7 +338,7 @@ class GitDir:
         clean = True
         can_push = False
         can_pull = True
-        if len(options.branch) > 0 and 'On branch ' + options.branch not in out:
+        if (len(options.branch) > 0 and not re.search(fr'On branch {options.branch}\n', out)):
             branch = out.splitlines()[0].replace("On branch ", "")
             messages.append(colorize(Colors.WARNING, "On branch %s" % branch))
             can_pull = False
@@ -379,7 +396,7 @@ class GitDir:
                     messages.append(colorize(Colors.OKGREEN, "Pulled nothing"))
             elif "CONFLICT" in pull:
                 messages.append(colorize(Colors.FAIL, "Pull conflict"))
-            elif "fatal: No remote repository specified." in pull\
+            elif "fatal: No remote repository specified." in pull \
                     or "There is no tracking information for the current branch." in pull:
                 messages.append(colorize(Colors.WARNING, "Pull remote not configured"))
             elif "fatal: " in pull:
@@ -438,7 +455,7 @@ class GitDir:
         if options.verbose:
             self.write_to_msg_buffer("---------------- " + self.path + " -----------------\n")
 
-    def run(self, command, options, work_dir):
+    def run(self, command: str, options: argparse.Namespace, work_dir: str) -> Tuple[int, str]:
         if options.verbose:
             self.write_to_msg_buffer("running %s\n" % command)
         try:
@@ -451,38 +468,38 @@ class GitDir:
                 e.output = e.output.decode("utf-8")
             return e.returncode, e.output
 
-    def write_to_msg_buffer(self, msg):
+    def write_to_msg_buffer(self, msg: str) -> None:
         self.msg_buffer.write(msg)
 
-    def get_msg_buffer_as_str(self):
+    def get_msg_buffer_as_str(self) -> str:
         return self.msg_buffer.getvalue()
 
 
-def scan(dirpath, dirnames, options) -> List[GitDir]:
+def scan(dirpath: str, dirnames: List[str], options: argparse.Namespace) -> List[GitDir]:
     """
     Check the subdirectories of a single directory.
     See if they are versioned in git and display the requested information.
     """
 
-    def dir_filter(path):
+    def dir_filter(path: str) -> bool:
         # Remove excluded directories
         for ex in options.exclude:
             if re.search(ex, path):
                 if options.verbose:
-                    print("skipping %s" % path)
+                    print(f'skipping {path}')
                 return False
 
         # Remove if is there a .clustergit-ignore file
         if os.path.exists(os.path.join(path, ".clustergit-ignore")):
             if options.verbose:
-                print("skipping %s directory" % path)
+                print(f'skipping {path} directory')
             return False
 
         # Remove if there is no .git dir
         if os.path.exists(os.path.join(path, ".git")):
             if options.skipSymLinks and os.path.islink(path):
                 if options.verbose:
-                    print("skipping %s symbolic link" % path)
+                    print(f'skipping {path} symbolic link')
                 return False
         else:
             # Not a git directory
@@ -499,13 +516,14 @@ def scan(dirpath, dirnames, options) -> List[GitDir]:
 
     # Filter directories and convert to paths
     paths = [os.path.join(dirpath, dirname) for dirname in dirnames]
+
     git_dirs = [GitDir(path, options) for path in paths if dir_filter(path)]
 
     return git_dirs
 
 
-def analyze(git_dirs: List[GitDir], options):
-    def analyze_single(git_dir: GitDir):
+def analyze(git_dirs: List[GitDir], options: argparse.Namespace) -> int:
+    def analyze_single(git_dir: GitDir) -> GitDir:
         git_dir.analyze(options)
         return git_dir
 
@@ -524,8 +542,7 @@ def analyze(git_dirs: List[GitDir], options):
                 # Wait for parallel execution to finish
                 for i, (future, label) in enumerate(fs.items()):
                     while not future.done():
-                        print('Waiting for %s %s (%d/%d)' % (label, next(spinner), i + 1, len(fs)), end='\x1b[1K\r',
-                              flush=True)
+                        clearline(f'Waiting for {label} {next(spinner)} ({i + 1}/{len(fs)})')
                         time.sleep(0.1)
                     write_with_color(sys.stdout, future.result().get_msg_buffer_as_str())
         finally:
@@ -542,7 +559,7 @@ def analyze(git_dirs: List[GitDir], options):
 # -------------------
 # Now, onto the main event!
 # -------------------
-def main(args):
+def main(args: List[str]) -> None:
     try:
         options = read_arguments(args)
         if options.clear:
@@ -554,17 +571,30 @@ def main(args):
             options.dirname = ['.']
 
         if not options.quiet:
-            print('Scanning sub directories of %s' % options.dirname)
+            print(f'Scanning sub directories of {options.dirname}')
 
         if not options.colors:
             # noinspection PyGlobalUndefined
             global colorize
             colorize = decolorize
 
+        options.global_ignore_file = os.path.expandvars(options.global_ignore_file)
+
+        if options.global_ignore_file and os.path.exists(options.global_ignore_file):
+            print('Reading global .clustergit-ignore file from {}'.format(options.global_ignore_file))
+            with open(options.global_ignore_file, 'r') as ignore_file:
+                for line in ignore_file:
+                    options.exclude.append(re.compile(line.strip()))
+
         git_dirs = []
 
         for directory in options.dirname:
-            for (path, dirs, files) in os.walk(directory):
+            for (path, dirs, files) in os.walk(directory, topdown=True):
+
+                # Filter dirs to prevent unnecessary recursion in subdirectories
+                if options.exclude:
+                    dirs[:] = [d for d in dirs if not any([re.search(regex, os.path.join(path, d)) for regex in options.exclude])]
+
                 git_dirs.extend(scan(dirpath=path, dirnames=dirs, options=options))
                 if not options.recursive:
                     break
