@@ -111,9 +111,11 @@ def read_arguments(args: List[str]) -> argparse.Namespace:
     parser.add_argument(
         "-d", "--dir",
         dest="dirname",
-        action="store",
+        # Action=append allows the caller to specify `-d` multiple times.
+        # For example: `-d foo -d bar/batz/git_repos` would process both directories.
+        action="append",
         help="The directory to parse sub dirs from",
-        default="."
+        default=[]
     )
 
     parser.add_argument(
@@ -563,6 +565,11 @@ def main(args: List[str]) -> None:
         if options.clear:
             os.system('clear')
 
+        # If there are no dirnames set, the list will be empty;
+        # set to default value of current directory.
+        if not options.dirname:
+            options.dirname = ['.']
+
         if not options.quiet:
             print(f'Scanning sub directories of {options.dirname}')
 
@@ -574,22 +581,23 @@ def main(args: List[str]) -> None:
         options.global_ignore_file = os.path.expandvars(options.global_ignore_file)
 
         if options.global_ignore_file and os.path.exists(options.global_ignore_file):
-            print('Reading global .clustergit-ignore file from {}'.format(options.global_ignore_file))
+            print(f'Reading global .clustergit-ignore file from {options.global_ignore_file}')
             with open(options.global_ignore_file, 'r') as ignore_file:
                 for line in ignore_file:
                     options.exclude.append(re.compile(line.strip()))
 
         git_dirs = []
 
-        for (path, dirs, files) in os.walk(options.dirname, topdown=True):
+        for directory in options.dirname:
+            for (path, dirs, files) in os.walk(directory, topdown=True):
 
-            # Filter dirs to prevent unnecessary recursion in subdirectories
-            if options.exclude:
-                dirs[:] = [d for d in dirs if not any([re.search(regex, os.path.join(path, d)) for regex in options.exclude])]
+                # Filter dirs to prevent unnecessary recursion in subdirectories
+                if options.exclude:
+                    dirs[:] = [d for d in dirs if not any([re.search(regex, os.path.join(path, d)) for regex in options.exclude])]
 
-            git_dirs.extend(scan(path, dirs, options))
-            if not options.recursive:
-                break
+                git_dirs.extend(scan(dirpath=path, dirnames=dirs, options=options))
+                if not options.recursive:
+                    break
 
         if len(git_dirs) == 0:
             die_with_error("None of those sub directories had a .git file")
