@@ -352,6 +352,10 @@ class GitDir:
             messages.append(colorize(Colors.WARNING, "Untracked files"))
             can_push = True
             clean = False
+        elif 'No commits yet' in out:
+            messages.append(colorize(Colors.OKBLUE, "No commits yet"))
+            can_push = False
+            clean = True
         else:
             messages.append(colorize(Colors.FAIL, "Changes"))
             can_pull = False
