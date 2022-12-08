@@ -27,6 +27,7 @@ except ImportError:
     def autocomplete(_args):
         pass
 
+flat_map = lambda f, xs: [y for ys in xs for y in f(ys)]
 
 def clearline(msg):
     # https://stackoverflow.com/a/53843296/2536029
@@ -377,19 +378,18 @@ class GitDir:
                 % cmdprefix, options, self.path
             )
             other_dirty_branches = list(
-                map(
-                    lambda ref: ref.split(', ')[-1],
-                    filter(
-                        lambda ref: not ref.startswith("HEAD ->"),
+                filter(
+                    lambda ref: not (ref.startswith('HEAD ->') or ref.startswith('tag:')),
+                    flat_map(
+                        lambda ref: ref.split(', '),
                         dirty_branches.splitlines()
                     )
                 )
             )
-
             if len(other_dirty_branches) > 0:
                 messages.append(colorize(
                     Colors.FAIL,
-                    "Unpushed commits on branches: [%s]" % ','.join(other_dirty_branches)
+                    "Unpushed commits on branches: [%s]" % ', '.join(other_dirty_branches)
                 ))
 
         if clean:
