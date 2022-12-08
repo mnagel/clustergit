@@ -25,7 +25,7 @@ Make the script executable and drop it somewhere in your $PATH.
 ## Dependencies
 
  * python3
- 
+
 For latest version with python 2.7 support see:
 https://github.com/mnagel/clustergit/releases/tag/python27
 
@@ -55,6 +55,8 @@ optional arguments:
   -d DIRNAME, --dir DIRNAME
                         The directory to parse sub dirs from (default: .)
   -v, --verbose         Show the full detail of git status (default: False)
+  --all-branches        Check unpushed commits in all branches (default:
+                        False)
   -a ALIGN, --align ALIGN
                         Repo name align (space padding) (default: 40)
   -r REMOTE, --remote REMOTE
