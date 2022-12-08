@@ -27,6 +27,7 @@ except ImportError:
     def autocomplete(_args):
         pass
 
+flat_map = lambda f, xs: [y for ys in xs for y in f(ys)]
 
 def clearline(msg):
     # https://stackoverflow.com/a/53843296/2536029
@@ -124,6 +125,14 @@ def read_arguments(args: List[str]) -> argparse.Namespace:
         dest="verbose",
         default=False,
         help="Show the full detail of git status"
+    )
+
+    parser.add_argument(
+        "--all-branches",
+        action="store_true",
+        dest="check_all_branches",
+        default=False,
+        help="Check unpushed commits in all branches"
     )
 
     parser.add_argument(
@@ -362,6 +371,26 @@ class GitDir:
             clean = False
         else:
             can_push = False
+
+        if options.check_all_branches:
+            status, dirty_branches = self.run(
+                '%s git --no-pager log --branches --not --remotes --no-walk --pretty=tformat:"%%D"'
+                % cmdprefix, options, self.path
+            )
+            other_dirty_branches = list(
+                filter(
+                    lambda ref: not (ref.startswith('HEAD ->') or ref.startswith('tag:')),
+                    flat_map(
+                        lambda ref: ref.split(', '),
+                        dirty_branches.splitlines()
+                    )
+                )
+            )
+            if len(other_dirty_branches) > 0:
+                messages.append(colorize(
+                    Colors.FAIL,
+                    "Unpushed commits on branches: [%s]" % ', '.join(other_dirty_branches)
+                ))
 
         if clean:
             if not options.hide_clean:
