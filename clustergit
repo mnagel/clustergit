@@ -482,7 +482,7 @@ class GitDir:
                 messages.append(colorize(Colors.OKBLUE, "Checkout successful"))
 
         if not options.count and messages:
-            self.write_to_msg_buffer(self.path.ljust(options.align) + ": ")
+            self.write_to_msg_buffer(self.path.ljust(options.align) + " : ")
             write_with_color(self.msg_buffer, ", ".join(messages) + "\n")
 
         if options.verbose:
@@ -537,7 +537,7 @@ def scan(dirpath: str, dirnames: List[str], options: argparse.Namespace) -> List
         else:
             # Not a git directory
             if options.unversioned:
-                sys.stdout.write(path.ljust(options.align) + ": ")
+                sys.stdout.write(path.ljust(options.align) + " : ")
                 write_with_color(sys.stdout, colorize(Colors.WARNING, "Not a GIT repository") + "\n")
                 sys.stdout.flush()
             return False
