@@ -258,6 +258,14 @@ def read_arguments(args: List[str]) -> argparse.Namespace:
     )
 
     parser.add_argument(
+        "--skip-submodules",
+        action="store_true",
+        dest="skip_submodules",
+        default=False,
+        help="Skip git submodules"
+    )
+
+    parser.add_argument(
         "-e", "--exclude",
         action="append",
         dest="exclude",
@@ -522,15 +530,21 @@ def scan(dirpath: str, dirnames: List[str], options: argparse.Namespace) -> List
                     print(f'skipping {path}')
                 return False
 
-        # Remove if is there a .clustergit-ignore file
+        # Remove if there is a .clustergit-ignore file
         if os.path.exists(os.path.join(path, ".clustergit-ignore")):
             if options.verbose:
                 print(f'skipping {path} directory')
             return False
 
-        # Remove if there is no .git dir
         if os.path.exists(os.path.join(path, ".git")):
+            if options.skip_submodules:
+                if os.path.isfile(os.path.join(path, ".git")):
+                    # Remove if there is a .git file (we are inside a git submodule)
+                    if options.verbose:
+                        print(f'skipping {path} git submodule')
+                    return False
             if options.skipSymLinks and os.path.islink(path):
+                # Remove if there is no .git dir
                 if options.verbose:
                     print(f'skipping {path} symbolic link')
                 return False
