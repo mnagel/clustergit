@@ -395,6 +395,7 @@ class GitDir:
                     Colors.FAIL,
                     "Unpushed commits on branches: [%s]" % ', '.join(other_dirty_branches)
                 ))
+                clean = False
 
         if clean:
             if not options.hide_clean:
