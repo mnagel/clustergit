@@ -8,6 +8,7 @@ import io
 import itertools
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -29,13 +30,10 @@ except ImportError:
 
 flat_map = lambda f, xs: [y for ys in xs for y in f(ys)]
 
-def clearline(msg):
-    # https://stackoverflow.com/a/53843296/2536029
-    CURSOR_UP_ONE = '\033[K'
-    ERASE_LINE = '\x1b[2K'
-    sys.stdout.write(CURSOR_UP_ONE)
-    sys.stdout.write(ERASE_LINE + '\r')
-    print(msg, end='\r')
+def clearline(msg: str = '') -> None:
+    width = shutil.get_terminal_size().columns
+    sys.stdout.write('\r\033[2K' + msg[:width - 1])
+    sys.stdout.flush()
 
 
 def colorize(color: str, message: str) -> str:
@@ -574,9 +572,13 @@ def analyze(git_dirs: List[GitDir], options: argparse.Namespace) -> int:
             else:
                 # Wait for parallel execution to finish
                 for i, (future, label) in enumerate(fs.items()):
+                    progress_shown = False
                     while not future.done():
                         clearline(f'Waiting for {label} {next(spinner)} ({i + 1}/{len(fs)})')
+                        progress_shown = True
                         time.sleep(0.1)
+                    if progress_shown:
+                        clearline()
                     write_with_color(sys.stdout, future.result().get_msg_buffer_as_str())
         finally:
             for future in fs:
